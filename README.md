@@ -6,6 +6,8 @@ NovaPlan is a zero-install, offline-first project management tool packed into on
 
 Use it to plan projects, track tasks and subtasks, manage sprints, visualise timelines on an interactive Gantt chart, run critical-path analysis, balance resource workload, track risks, and share progress as Excel or animated GIF exports.
 
+![NovaPlan screenshot](Novaplan.jpg)
+
 ---
 
 ## Quick Start
