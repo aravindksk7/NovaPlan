@@ -120,7 +120,7 @@
       position: relative;
       z-index: 50;
       overflow-x: auto;
-      overflow-y: hidden;
+      overflow-y: visible;
     }
     .topbar::-webkit-scrollbar { height: 4px; }
     .topbar::-webkit-scrollbar-track { background: transparent; }
@@ -149,14 +149,14 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .menu { position: relative; }
+    .menu { position: relative; z-index: 100; }
     .menu-panel {
       position: absolute;
       right: 0;
       top: 38px;
       min-width: 180px;
       max-height: 80vh;
-      z-index: 100;
+      z-index: 1000;
       display: none;
       border: 1px solid var(--border);
       border-radius: 8px;
