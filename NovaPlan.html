@@ -68,6 +68,10 @@
       border-radius: 6px;
       padding: 0 10px;
       white-space: nowrap;
+      flex-shrink: 0;
+    }
+    select {
+      flex-shrink: 0;
     }
     button:hover:not(:disabled), select:hover:not(:disabled) { border-color: var(--neon-cyan); }
     button:disabled, select:disabled, input:disabled { opacity: .45; cursor: not-allowed; }
@@ -82,6 +86,7 @@
       padding: 0 10px;
       text-decoration: none;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .help-link:hover { border-color: var(--neon-cyan); }
     .creator-link {
@@ -95,6 +100,7 @@
       text-decoration: none;
       white-space: nowrap;
       font-size: 12px;
+      flex-shrink: 0;
     }
     .creator-link:hover {
       color: var(--text-primary);
@@ -105,20 +111,35 @@
     .topbar {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 10px;
       min-height: 54px;
       padding: 8px 12px;
       background: var(--topbar-bg);
       border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 50;
+      overflow-x: auto;
+      overflow-y: hidden;
     }
+    .topbar::-webkit-scrollbar { height: 4px; }
+    .topbar::-webkit-scrollbar-track { background: transparent; }
+    .topbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, .1);
+      border-radius: 2px;
+    }
+    .topbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .2); }
+    body.light .topbar::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, .1); }
+    body.light .topbar::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, .2); }
     .brand {
       font-weight: 800;
       letter-spacing: 0;
       color: var(--neon-cyan);
       text-shadow: var(--brand-shadow);
       margin-right: 8px;
+      flex-shrink: 0;
     }
-    .spacer { flex: 1; }
+    .spacer { flex: 1; min-width: 20px; }
     .status {
       color: var(--text-muted);
       border: 1px solid var(--border);
@@ -126,6 +147,7 @@
       padding: 5px 10px;
       font-size: 12px;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .menu { position: relative; }
     .menu-panel {
@@ -133,11 +155,13 @@
       right: 0;
       top: 38px;
       min-width: 180px;
-      z-index: 30;
+      max-height: 80vh;
+      z-index: 100;
       display: none;
       border: 1px solid var(--border);
       border-radius: 8px;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       background: var(--bg-elevated);
       box-shadow: 0 16px 40px rgba(0,0,0,.45);
     }
@@ -153,6 +177,15 @@
     }
     .menu-panel button:hover { background: rgba(0, 212, 255, .08); }
     body.light .menu-panel button:hover { background: rgba(9, 105, 218, .10); }
+    .menu-panel::-webkit-scrollbar { width: 8px; }
+    .menu-panel::-webkit-scrollbar-track { background: transparent; }
+    .menu-panel::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, .15);
+      border-radius: 4px;
+    }
+    .menu-panel::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .25); }
+    body.light .menu-panel::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, .15); }
+    body.light .menu-panel::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, .25); }
     .main-layout {
       display: grid;
       grid-template-columns: minmax(620px, 55%) minmax(420px, 45%);
@@ -165,7 +198,8 @@
     .main-layout.view-sprint,
     .main-layout.view-dashboard,
     .main-layout.view-workload,
-    .main-layout.view-raid { grid-template-columns: 1fr; }
+    .main-layout.view-raid,
+    .main-layout.view-portfolio { grid-template-columns: 1fr; }
     .main-layout.view-grid section[aria-label="Gantt chart"],
     .main-layout.view-grid .board-panel,
     .main-layout.view-gantt section[aria-label="Task data grid"],
@@ -179,7 +213,9 @@
     .main-layout.view-workload section[aria-label="Task data grid"],
     .main-layout.view-workload section[aria-label="Gantt chart"],
     .main-layout.view-raid section[aria-label="Task data grid"],
-    .main-layout.view-raid section[aria-label="Gantt chart"] {
+    .main-layout.view-raid section[aria-label="Gantt chart"],
+    .main-layout.view-portfolio section[aria-label="Task data grid"],
+    .main-layout.view-portfolio section[aria-label="Gantt chart"] {
       display: none;
     }
     .panel {
@@ -194,7 +230,8 @@
     .main-layout.view-sprint .board-panel,
     .main-layout.view-dashboard .board-panel,
     .main-layout.view-workload .board-panel,
-    .main-layout.view-raid .board-panel {
+    .main-layout.view-raid .board-panel,
+    .main-layout.view-portfolio .board-panel {
       display: block;
     }
     .panel-title {
@@ -347,6 +384,51 @@
       color: var(--text-muted);
       font-weight: 600;
     }
+    th.column-draggable {
+      cursor: grab;
+      user-select: none;
+    }
+    .sticky-col {
+      position: sticky !important;
+      z-index: 2;
+    }
+    th.sticky-col {
+      z-index: 12 !important;
+      background: var(--gantt-header-bg) !important;
+    }
+    tbody tr td.sticky-col {
+      background: var(--bg-primary);
+    }
+    tbody tr.is-highlighted td.sticky-col {
+      background: color-mix(in srgb, var(--bg-primary) 92%, #00d4ff) !important;
+    }
+    tbody tr.is-slipped td.sticky-col {
+      background: color-mix(in srgb, var(--bg-primary) 90%, #ff5f7a) !important;
+    }
+    tbody tr.is-at-risk td.sticky-col {
+      background: color-mix(in srgb, var(--bg-primary) 90%, #ff9900) !important;
+    }
+    tbody tr.is-summary td.sticky-col {
+      background: color-mix(in srgb, var(--bg-primary) 96.5%, #ffffff) !important;
+    }
+    body.light tbody tr.is-summary td.sticky-col {
+      background: color-mix(in srgb, var(--bg-primary) 96%, #000000) !important;
+    }
+    tbody tr:hover td.sticky-col {
+      background: color-mix(in srgb, var(--bg-primary) 97.5%, #ffffff) !important;
+    }
+    body.light tbody tr:hover td.sticky-col {
+      background: color-mix(in srgb, var(--bg-primary) 96%, #000000) !important;
+    }
+    td.sticky-col[data-key="title"], th.sticky-col[data-col-key="title"] {
+      border-right: 2px solid var(--border) !important;
+    }
+    th.column-dragging {
+      cursor: grabbing;
+      opacity: .45;
+    }
+    th.column-drop-left { box-shadow: inset 3px 0 0 var(--neon-cyan); }
+    th.column-drop-right { box-shadow: inset -3px 0 0 var(--neon-cyan); }
     tr.is-highlighted td {
       background: rgba(0, 212, 255, .08);
       box-shadow: inset 3px 0 0 var(--neon-cyan);
@@ -374,6 +456,10 @@
     }
     tr:hover td { background: rgba(255,255,255,.025); }
     body.light tr:hover td { background: rgba(0,0,0,.04); }
+    tr.cf-row-highlight td {
+      background-color: var(--cf-bg) !important;
+      color: var(--cf-color) !important;
+    }
     .cell-editable { cursor: pointer; }
     .cell-editable:hover { background: rgba(0, 212, 255, .06); }
     body.light .cell-editable:hover { background: rgba(9, 105, 218, .08); }
@@ -489,22 +575,62 @@
       border-radius: 8px;
       background: var(--bg-elevated);
       box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      max-height: calc(100vh - 48px);
+      display: flex;
+      flex-direction: column;
+      /* Scrollable modal: header and footer stay fixed, body scrolls */
+      overflow: hidden;
     }
     .modal-box.help-modal {
       width: min(980px, calc(100vw - 32px));
       max-height: calc(100vh - 48px);
       display: grid;
       grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
     }
-    .modal-head, .modal-foot {
+    .modal-head {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--bg-elevated);
+      position: relative;
+      z-index: 1;
     }
-    .modal-foot { border-bottom: 0; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
-    .modal-body { padding: 16px; color: var(--text-muted); line-height: 1.5; }
+    .modal-foot {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-shrink: 0;
+      background: var(--bg-elevated);
+      position: relative;
+      z-index: 1;
+    }
+    .modal-body {
+      padding: 16px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      overflow-y: auto;
+      overflow-x: hidden;
+      flex: 1;
+      min-height: 0;
+      /* Custom scrollbar for modals */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, .15) transparent;
+    }
+    .modal-body::-webkit-scrollbar { width: 8px; }
+    .modal-body::-webkit-scrollbar-track { background: transparent; }
+    .modal-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, .15);
+      border-radius: 4px;
+    }
+    .modal-body::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .25); }
+    body.light .modal-body::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, .15); }
+    body.light .modal-body::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, .25); }
     .help-modal .modal-body {
       overflow: auto;
-      max-height: calc(100vh - 170px);
+      max-height: none;
     }
     .embedded-help {
       display: grid;
@@ -590,7 +716,214 @@
       font-weight: 600;
     }
     .jira-link:hover { text-decoration: underline; }
+
+    #project-select {
+      width: 150px;
+      border-radius: 6px;
+      padding: 0 8px;
+      font-weight: 600;
+      color: var(--neon-cyan);
+      border-color: var(--neon-cyan);
+      margin-right: 6px;
+    }
+    body.light #project-select {
+      color: var(--neon-blue);
+      border-color: var(--neon-blue);
+    }
     .file-input { display: none; }
+    .context-menu {
+      position: fixed;
+      z-index: 1000;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 0;
+      min-width: 190px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    }
+    .context-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .context-menu-item:hover {
+      background: var(--bg-secondary);
+      color: var(--neon-cyan);
+    }
+    .context-menu-item.danger {
+      color: var(--danger);
+    }
+    .context-menu-item.danger:hover {
+      background: rgba(255, 95, 122, .1);
+      color: var(--danger);
+    }
+    .context-menu-separator {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* Glassmorphism Refinements */
+    .context-menu, .gantt-tooltip, .modal-box, #export-menu, #tools-menu {
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      background: color-mix(in srgb, var(--bg-elevated) 78%, transparent) !important;
+    }
+    body.light .context-menu, body.light .gantt-tooltip, body.light .modal-box, body.light #export-menu, body.light #tools-menu {
+      background: color-mix(in srgb, var(--bg-elevated) 85%, transparent) !important;
+    }
+
+    /* Details Drawer */
+    .details-drawer {
+      position: fixed;
+      top: 50px; /* height of topbar */
+      right: 0;
+      width: 480px;
+      height: calc(100vh - 50px);
+      background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-left: 1px solid var(--border);
+      box-shadow: -10px 0 30px rgba(0,0,0,.35);
+      z-index: 80;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .details-drawer.show {
+      transform: translateX(0);
+    }
+    .details-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .details-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+    .details-close:hover {
+      color: var(--danger);
+    }
+    .details-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+    }
+    .details-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .details-group label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    .details-input, .details-select, .details-textarea {
+      width: 100%;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-size: 13px;
+    }
+    .details-input:focus, .details-select:focus, .details-textarea:focus {
+      outline: none;
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15);
+    }
+
+    /* Command Palette */
+    .command-palette-box {
+      width: min(600px, calc(100vw - 32px));
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 24px 70px rgba(0,0,0,.6);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      margin-top: 10vh;
+    }
+    .command-input-wrapper {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      gap: 12px;
+    }
+    .command-search-icon {
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+    .command-input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 15px;
+      outline: none;
+    }
+    .command-results {
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+    .command-item {
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+    }
+    .command-item:hover, .command-item.active {
+      background: rgba(0, 229, 255, 0.08);
+      color: var(--neon-cyan);
+    }
+    .command-item-label {
+      font-weight: 500;
+    }
+    .command-item-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg-secondary);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .command-item:hover .command-item-badge, .command-item.active .command-item-badge {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+    .command-item-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-left: 8px;
+    }
+
     @media (max-width: 1023px) {
       body { overflow: auto; }
       .app-shell { min-width: 0; height: auto; min-height: 100vh; }
@@ -611,10 +944,32 @@
   <div id="modal-overlay" class="modal-overlay" aria-hidden="true"></div>
   <div id="toast-container" class="toast-container"></div>
   <div id="gantt-tooltip" class="gantt-tooltip"></div>
+  <div id="context-menu" class="context-menu" style="display: none;"></div>
+
+  <!-- Details Drawer -->
+  <div id="details-drawer" class="details-drawer" aria-hidden="true" style="display: none;">
+    <div class="details-head">
+      <h3 class="font-semibold text-lg" id="details-title">Task Details</h3>
+      <button type="button" class="details-close" id="details-close-btn" aria-label="Close details">×</button>
+    </div>
+    <div class="details-body" id="details-body-content"></div>
+  </div>
+
+  <!-- Command Palette -->
+  <div id="command-palette" class="modal-overlay" aria-hidden="true" style="display: none;">
+    <div class="command-palette-box">
+      <div class="command-input-wrapper">
+        <span class="command-search-icon">🔍</span>
+        <input type="text" id="command-search-input" class="command-input" placeholder="Type a task name, WBS, or action..." autocomplete="off">
+      </div>
+      <div id="command-results-list" class="command-results"></div>
+    </div>
+  </div>
 
   <div class="app-shell">
     <nav class="topbar">
       <div class="brand">NovaPlan</div>
+      <select id="project-select" aria-label="Select Project" disabled></select>
       <select id="template-select" disabled aria-label="Load template">
         <option value="">Load Template...</option>
         <option value="agile">Agile Sprint Plan</option>
@@ -633,6 +988,7 @@
         <option value="dashboard">Dashboard</option>
         <option value="workload">Workload</option>
         <option value="raid">RAID</option>
+        <option value="portfolio">Portfolio</option>
       </select>
       <select id="filter-select" disabled aria-label="Quick filter">
         <option value="all">All Tasks</option>
@@ -658,6 +1014,7 @@
         <option value="task_type">Task Type</option>
         <option value="slippage_status">Slippage</option>
       </select>
+      <input id="search-input" placeholder="Search tasks..." type="search" style="width: 140px; height: 34px; border-radius: 6px; padding: 0 10px; font-size: 13px;" disabled />
       <div id="export-menu" class="menu">
         <button id="export-menu-btn" disabled aria-haspopup="true" aria-expanded="false">Export</button>
         <div class="menu-panel" role="menu">
@@ -673,6 +1030,8 @@
         <button id="tools-menu-btn" disabled aria-haspopup="true" aria-expanded="false">Tools</button>
         <div class="menu-panel" role="menu">
           <button data-tool="calendar" role="menuitem">Calendar Settings</button>
+          <button data-tool="gantt-labels" role="menuitem">Gantt Label Settings</button>
+          <button data-tool="gantt-lines" role="menuitem">Gantt Lines</button>
           <button data-tool="choose-columns" role="menuitem">Choose Columns…</button>
           <button data-tool="set-baseline" role="menuitem">Set Baseline</button>
           <button data-tool="view-baseline" role="menuitem">View Baseline</button>
@@ -683,6 +1042,9 @@
           <button data-tool="compare-scenario" role="menuitem">Compare Scenario</button>
           <button data-tool="add-raid" role="menuitem">Add RAID Item</button>
           <button data-tool="log-change" role="menuitem">Log Change</button>
+          <button data-tool="integrations" role="menuitem">Integrations & Sync...</button>
+          <button data-tool="custom-fields" role="menuitem">Manage Custom Fields...</button>
+          <button data-tool="conditional-formatting" role="menuitem">Conditional Formatting...</button>
           <hr style="border:0;border-top:1px solid var(--border);margin:4px 0">
           <button data-tool="reset-db" role="menuitem" style="color:var(--danger)">Reset All Data…</button>
         </div>
@@ -758,6 +1120,7 @@
 
       <section>
         <h3>The Top Toolbar — Every Button Explained</h3>
+        <p>The toolbar adapts to your screen size — on narrower displays, controls wrap to a second row or allow horizontal scrolling to keep all buttons accessible.</p>
         <table>
           <tr><th style="width:130px">Control</th><th>What it does</th></tr>
           <tr><td><code>Load Template…</code></td><td>Loads a ready-made plan: <strong>Agile Sprint Plan</strong>, <strong>CI/CD Pipeline Setup</strong>, <strong>Product Launch</strong>, or <strong>Bug Triage Workflow</strong>. Choose <em>Merge</em> to add tasks alongside existing ones, or <em>Replace</em> to start fresh.</td></tr>
@@ -767,12 +1130,13 @@
           <tr><td><code>Filter</code></td><td>Shows a subset of tasks — e.g. only Slipped, only Milestones, only Critical Path tasks (see Filtering section).</td></tr>
           <tr><td><code>Group By</code></td><td>Re-orders and groups rows by Status, Sprint, Resource, Priority, Task Type, or Slippage.</td></tr>
           <tr><td><code>Export</code></td><td>Downloads your plan in SQL, CSV, Jira CSV, Project XML, Excel, or Gantt GIF format.</td></tr>
-          <tr><td><code>Tools</code></td><td>Advanced features: Calendar settings, Baselines, Sprint management, Saved views, Scenarios, RAID items, Change logging.</td></tr>
+          <tr><td><code>Tools</code></td><td>Advanced features: All 17 tools now accessible regardless of view — Calendar, Choose Columns, Baselines, Sprints, Saved Views, Scenarios, RAID, Change Log, Custom Fields, Conditional Formatting, Integrations, Gantt Labels, Gantt Lines, and Reset Data. The Tools menu dropdown appears above all other UI elements for easy access.</td></tr>
           <tr><td><code>Saved Views</code></td><td>Pre-set view configurations (mode + filter + grouping). Six defaults included; save your own via <code>Tools &gt; Save View</code>.</td></tr>
           <tr><td><code>Import SQL/CSV</code></td><td>Loads tasks from a CSV file or restores a full database from a previously exported SQL file.</td></tr>
           <tr><td><code>Help</code></td><td>Opens this dialog.</td></tr>
           <tr><td>🌙 / ☀️</td><td>Toggles between dark and light theme. Your preference is remembered.</td></tr>
         </table>
+        <div class="help-tip">💡 <strong>Responsive Design:</strong> On wide screens (1920px+), all toolbar buttons fit on one line. On medium screens (1280-1920px), controls wrap to a second row automatically. On narrow screens, a horizontal scrollbar appears — all buttons remain accessible with no hidden elements.</div>
       </section>
 
       <section>
@@ -833,6 +1197,35 @@
           <li>Click <strong>✕</strong> to remove the custom colour and revert to the task-type colour.</li>
         </ol>
         <div class="help-tip">💡 Custom colours are saved with your plan and included in SQL, CSV, and Excel exports (the <code>Color</code> column), so they survive backup and restore.</div>
+      </section>
+
+      <section>
+        <h3>UX Polish &amp; Responsive Design</h3>
+        <p>NovaPlan includes several professional-grade UX enhancements to ensure a smooth experience across all screen sizes and viewport configurations.</p>
+        <h4>Scrollable Modals with Sticky Buttons</h4>
+        <p>All modal dialogs (Calendar Settings, Custom Fields, Baselines, etc.) now feature:</p>
+        <ul class="help-steps">
+          <li><strong>Sticky Header</strong> — The modal title stays fixed at the top, providing context while scrolling through long forms</li>
+          <li><strong>Scrollable Body</strong> — Form content scrolls smoothly within the modal, preventing viewport overflow</li>
+          <li><strong>Sticky Footer</strong> — OK/Cancel buttons remain visible and accessible at all times, even with many form fields</li>
+          <li><strong>Custom Scrollbar</strong> — Theme-aware scrollbar (dark/light mode) with smooth appearance</li>
+        </ul>
+        <h4>Responsive Toolbar</h4>
+        <p>The top toolbar adapts intelligently to your screen size:</p>
+        <ul class="help-steps">
+          <li><strong>Wide Screens (1920px+)</strong> — All controls fit in a single row with no wrapping</li>
+          <li><strong>Standard Screens (1440-1920px)</strong> — Flexible layout maintains single row when possible</li>
+          <li><strong>Laptop Screens (1280-1440px)</strong> — Elements wrap to a second row, keeping all controls visible</li>
+          <li><strong>Narrow Screens (&lt;1280px)</strong> — Horizontal scrollbar appears as a fallback, with no hidden elements</li>
+        </ul>
+        <p style="margin-top:6px">Critical UI elements (Help button, Theme switcher, Storage status) are protected with <code>flex-shrink: 0</code> to prevent compression or overlap.</p>
+        <h4>Improved Tools Menu</h4>
+        <ul class="help-steps">
+          <li><strong>All 17 menu items</strong> now visible regardless of current view mode</li>
+          <li><strong>Proper z-index layering</strong> — Menu dropdown appears above Gantt timeline and all other content</li>
+          <li><strong>Always accessible</strong> — No more hidden options or view-dependent limitations</li>
+        </ul>
+        <div class="help-tip">💡 <strong>Accessibility:</strong> All UX improvements maintain keyboard navigation, screen reader compatibility, and touch-friendly interactions across devices.</div>
       </section>
 
       <section>
@@ -1256,6 +1649,15 @@
     const DB_NAME = "novaplan.sqlite";
     const LOCAL_STORAGE_KEY = "novaplan_sqlite_bytes_v1";
     const DEFAULT_CALENDAR = { workingDays: [1, 2, 3, 4, 5], hoursPerDay: 8, startTime: "09:00", endTime: "17:00", holidays: [] };
+    const DEFAULT_GANTT_LABELS = { source: "task", position: "inside" };
+    const GANTT_LABEL_POSITIONS = ["inside", "middle", "above", "below"];
+    const DEFAULT_GANTT_LINE = { type: "date", date: "", task_id: null, color: "#00d4ff", thickness: 2 };
+    const GANTT_LABEL_FONTS = [
+      { value: "Inter, ui-sans-serif, system-ui, sans-serif", label: "Inter" },
+      { value: "Georgia, serif", label: "Georgia" },
+      { value: "'Courier New', monospace", label: "Courier" },
+      { value: "Arial, sans-serif", label: "Arial" }
+    ];
     const TASK_STATUSES = ["Not Started", "In Progress", "Blocked", "Done"];
     const TASK_PRIORITIES = ["Low", "Medium", "High", "Critical"];
     const DEPENDENCY_TYPES = ["FS", "SS", "FF", "SF"];
@@ -1282,6 +1684,13 @@
       modal: document.getElementById("modal-overlay"),
       toasts: document.getElementById("toast-container"),
       tooltip: document.getElementById("gantt-tooltip"),
+      contextMenu: document.getElementById("context-menu"),
+      detailsDrawer: document.getElementById("details-drawer"),
+      detailsBody: document.getElementById("details-body-content"),
+      detailsCloseBtn: document.getElementById("details-close-btn"),
+      commandPalette: document.getElementById("command-palette"),
+      commandInput: document.getElementById("command-search-input"),
+      commandResults: document.getElementById("command-results-list"),
       template: document.getElementById("template-select"),
       newTask: document.getElementById("new-task-btn"),
       bulkDelete: document.getElementById("bulk-delete-btn"),
@@ -1314,7 +1723,9 @@
       ganttZoomLevel: document.getElementById("gantt-zoom-level"),
       collapseAll: document.getElementById("collapse-all-btn"),
       expandAll: document.getElementById("expand-all-btn"),
-      themeToggle: document.getElementById("theme-toggle-btn")
+      themeToggle: document.getElementById("theme-toggle-btn"),
+      projectSelect: document.getElementById("project-select"),
+      searchInput: document.getElementById("search-input")
     };
 
     try {
@@ -1329,7 +1740,7 @@
       storage: null,
       tasks: [],
       visibleTasks: [],
-      settings: { calendar: { ...DEFAULT_CALENDAR } },
+      settings: { calendar: { ...DEFAULT_CALENDAR }, ganttLabels: { ...DEFAULT_GANTT_LABELS }, ganttLines: [] },
       sprints: [],
       savedViews: [],
       scenarios: [],
@@ -1503,6 +1914,57 @@
       return { start_date: newStart, end_date: newEnd };
     }
 
+    function shiftedEndForStart(task, startDate) {
+      if (!isValidIsoDate(startDate)) return startDate;
+      const offset = isValidIsoDate(task.start_date) && isValidIsoDate(task.end_date)
+        ? Math.max(0, workingDaysBetween(task.start_date, task.end_date) - 1)
+        : Math.max(0, Math.ceil(durationHours(task) / workingHoursPerDay()) - 1);
+      return addWorkingDays(startDate, offset);
+    }
+
+    async function cascadeAutoSchedule(startingTaskId) {
+      const tasks = await state.storage.loadTasks();
+      const byId = new Map(tasks.map(t => [t.id, t]));
+
+      const successors = new Map();
+      for (const t of tasks) {
+        const predIds = splitCsv(t.predecessor_ids).map(Number);
+        for (const pid of predIds) {
+          if (!successors.has(pid)) successors.set(pid, []);
+          successors.get(pid).push(t);
+        }
+      }
+
+      const queue = [startingTaskId];
+      const visited = new Set();
+
+      while (queue.length) {
+        const currentId = queue.shift();
+        if (visited.has(currentId)) continue;
+        visited.add(currentId);
+
+        const succs = successors.get(currentId) || [];
+        for (const succ of succs) {
+          const deps = succ.dependencies?.length
+            ? succ.dependencies
+            : splitCsv(succ.predecessor_ids).map(id => ({ predecessor_id: Number(id), type: "FS", lag_hours: 0 }));
+
+          const { start_date, end_date } = computeDatesFromDeps(succ, deps, byId);
+          if (start_date !== succ.start_date || end_date !== succ.end_date) {
+            succ.start_date = start_date;
+            succ.end_date = end_date;
+
+            const workingDaysCount = workingDaysBetween(start_date, end_date);
+            const duration_hours = workingDaysCount * workingHoursPerDay();
+
+            await state.storage.updateTask(succ.id, { start_date, end_date, duration_hours });
+
+            queue.push(succ.id);
+          }
+        }
+      }
+    }
+
     function formatNumber(value) {
       return Number(value).toFixed(2).replace(/\.?0+$/, "");
     }
@@ -1530,6 +1992,29 @@
 
     function text(value) {
       return value == null ? "" : String(value);
+    }
+
+    function safeHexColor(value, fallback = DEFAULT_GANTT_LINE.color) {
+      return /^#[0-9a-fA-F]{6}$/.test(value || "") ? value : fallback;
+    }
+
+    function sanitizeGanttLine(line = {}) {
+      const type = line.type === "task" ? "task" : "date";
+      const thickness = clamp(Math.round(Number(line.thickness || DEFAULT_GANTT_LINE.thickness)), 1, 12);
+      return {
+        id: text(line.id || window.crypto?.randomUUID?.() || `line-${Date.now()}-${Math.random().toString(16).slice(2)}`),
+        type,
+        date: type === "date" && isValidIsoDate(line.date) ? line.date : "",
+        task_id: type === "task" && Number.isFinite(Number(line.task_id)) ? Number(line.task_id) : null,
+        color: safeHexColor(line.color),
+        thickness
+      };
+    }
+
+    function sanitizeGanttLines(lines) {
+      return Array.isArray(lines)
+        ? lines.map(sanitizeGanttLine).filter(line => line.type === "date" ? line.date : line.task_id != null)
+        : [];
     }
 
     function appendCells(row, values) {
@@ -1583,6 +2068,8 @@
       if (!["http:", "https:"].includes(url.protocol)) throw new Error("Jira link must use http or https");
       return url.href;
     }
+
+
 
     function splitCsv(value) {
       return text(value).split(",").map(v => v.trim()).filter(Boolean);
@@ -1654,6 +2141,15 @@
       return state.sprints.find(s => Number(s.id) === Number(id))?.name || "";
     }
 
+    function getConditionalRules() {
+      return state.settings?.conditionalRules || [
+        { id: "slipped", enabled: false, condition: "slipped", target: "row", color: "#450a0a", textColor: "#f87171", label: "Highlight Slipped/Delayed Tasks in Red" },
+        { id: "critical", enabled: false, condition: "critical", target: "row", color: "#431407", textColor: "#fb923c", label: "Highlight Critical Path Tasks in Orange" },
+        { id: "blocked", enabled: true, condition: "blocked", target: "cell", column: "status", color: "#450a0a", textColor: "#f87171", label: "Highlight 'Blocked' cells in Red" },
+        { id: "completed", enabled: false, condition: "completed", target: "cell", column: "status", color: "#064e3b", textColor: "#4ade80", label: "Highlight 'Completed' cells in Green" }
+      ];
+    }
+
     function formatLag(hours) {
       const n = Number(hours || 0);
       if (!n) return "";
@@ -1668,7 +2164,7 @@
       const pred = byId.get(Number(dep.predecessor_id));
       if (!pred) return "";
       const type = DEPENDENCY_TYPES.includes(String(dep.type || "").toUpperCase()) ? String(dep.type).toUpperCase() : "FS";
-      return `${pred.wbs_code}${type === "FS" && !Number(dep.lag_hours || 0) ? "" : type}${formatLag(dep.lag_hours)}`;
+      return `${pred.wbs_code}${type}${formatLag(dep.lag_hours)}`;
     }
 
     function computeVariance(task) {
@@ -1708,7 +2204,13 @@
         comments: text(row.comments),
         tags: text(row.tags),
         jira_url: text(row.jira_url),
+        github_url: text(row.github_url),
+        custom_fields_json: text(row.custom_fields_json),
         color: /^#[0-9a-fA-F]{6}$/.test(row.color || "") ? row.color : "",
+        gantt_label: text(row.gantt_label),
+        gantt_label_position: ["above", "below", "middle"].includes(text(row.gantt_label_position)) ? text(row.gantt_label_position) : "",
+        gantt_label_color: /^#[0-9a-fA-F]{6}$/.test(row.gantt_label_color || "") ? row.gantt_label_color : "",
+        gantt_label_font: GANTT_LABEL_FONTS.some(font => font.value === row.gantt_label_font) ? row.gantt_label_font : "",
         is_milestone: Number(row.is_milestone || 0),
         is_highlighted: Number(row.is_highlighted || 0),
         parent_id: row.parent_id == null ? null : Number(row.parent_id),
@@ -2061,6 +2563,92 @@
     }
 
     const StorageEngine = {
+      getStorageKeyAndFile() {
+        const proj = state.activeProject || "Default Project";
+        if (proj === "Default Project") {
+          return { key: "sqlite", file: "novaplan.sqlite", localKey: "novaplan_sqlite_bytes_v1" };
+        } else {
+          const safeName = proj.replace(/[^a-zA-Z0-9_-]/g, "_");
+          return { key: `sqlite_${safeName}`, file: `novaplan_${safeName}.sqlite`, localKey: `novaplan_sqlite_bytes_v1_${safeName}` };
+        }
+      },
+      async loadPersistedBytesForProject(proj) {
+        let key, file, localKey;
+        if (proj === "Default Project") {
+          key = "sqlite";
+          file = "novaplan.sqlite";
+          localKey = "novaplan_sqlite_bytes_v1";
+        } else {
+          const safeName = proj.replace(/[^a-zA-Z0-9_-]/g, "_");
+          key = `sqlite_${safeName}`;
+          file = `novaplan_${safeName}.sqlite`;
+          localKey = `novaplan_sqlite_bytes_v1_${safeName}`;
+        }
+        try {
+          if (navigator.storage?.getDirectory) {
+            const root = await navigator.storage.getDirectory();
+            const fileHandle = await root.getFileHandle(file, { create: false });
+            const f = await fileHandle.getFile();
+            const bytes = new Uint8Array(await f.arrayBuffer());
+            if (bytes.length) return bytes;
+          }
+        } catch {}
+        try {
+          const bytes = await idbGet(key);
+          if (bytes) return new Uint8Array(bytes);
+        } catch {}
+        try {
+          const saved = localStorage.getItem(localKey);
+          if (saved) return base64ToBytes(saved);
+        } catch {}
+        return null;
+      },
+      async persistBytesForProject(proj, bytes) {
+        const safeName = proj.replace(/[^a-zA-Z0-9_-]/g, "_");
+        const key = proj === "Default Project" ? "sqlite" : `sqlite_${safeName}`;
+        const file = proj === "Default Project" ? "novaplan.sqlite" : `novaplan_${safeName}.sqlite`;
+        const localKey = proj === "Default Project" ? "novaplan_sqlite_bytes_v1" : `novaplan_sqlite_bytes_v1_${safeName}`;
+        try {
+          if (navigator.storage?.getDirectory) {
+            const root = await navigator.storage.getDirectory();
+            const fileHandle = await root.getFileHandle(file, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(bytes);
+            await writable.close();
+            return;
+          }
+        } catch {}
+        try {
+          await idbSet(key, bytes);
+          return;
+        } catch {}
+        try {
+          localStorage.setItem(localKey, bytesToBase64(bytes));
+        } catch {}
+      },
+      async deleteProjectStorage(proj) {
+        const safeName = proj.replace(/[^a-zA-Z0-9_-]/g, "_");
+        const key = proj === "Default Project" ? "sqlite" : `sqlite_${safeName}`;
+        const file = proj === "Default Project" ? "novaplan.sqlite" : `novaplan_${safeName}.sqlite`;
+        const localKey = proj === "Default Project" ? "novaplan_sqlite_bytes_v1" : `novaplan_sqlite_bytes_v1_${safeName}`;
+        try {
+          if (navigator.storage?.getDirectory) {
+            const root = await navigator.storage.getDirectory();
+            await root.removeEntry(file, { recursive: true });
+          }
+        } catch {}
+        try {
+          const db = await idbOpen();
+          await new Promise((resolve, reject) => {
+            const req = db.transaction("store", "readwrite").objectStore("store").delete(key);
+            req.onsuccess = () => { db.close(); resolve(); };
+            req.onerror = () => { db.close(); reject(req.error); };
+          });
+        } catch {}
+        try {
+          localStorage.removeItem(localKey);
+        } catch {}
+      },
       async init() {
         await this.loadSqlJs();
         const initialBytes = await this.loadPersistedBytes();
@@ -2086,13 +2674,18 @@
         this.mode = "In-Memory";
         this.persistWarning = "No persistent storage available. Export SQL before closing.";
 
+        const keys = this.getStorageKeyAndFile();
+        const file = keys.file;
+        const key = keys.key;
+        const localKey = keys.localKey;
+
         // Tier 1: OPFS — native browser file, best performance
         try {
           if (navigator.storage?.getDirectory) {
             const root = await navigator.storage.getDirectory();
-            this.fileHandle = await root.getFileHandle(DB_NAME, { create: true });
-            const file = await this.fileHandle.getFile();
-            const bytes = new Uint8Array(await file.arrayBuffer());
+            this.fileHandle = await root.getFileHandle(file, { create: true });
+            const f = await this.fileHandle.getFile();
+            const bytes = new Uint8Array(await f.arrayBuffer());
             this.mode = "OPFS";
             this.persistWarning = "";
             return bytes.length ? bytes : null;
@@ -2103,20 +2696,22 @@
 
         // Tier 2: IndexedDB — works on file://, stores binary natively, large capacity
         try {
-          const idbBytes = await idbGet("sqlite");
+          const idbBytes = await idbGet(key);
           this.mode = "IndexedDB";
           this.persistWarning = "";
           if (idbBytes) return new Uint8Array(idbBytes);
           // No IDB data yet — migrate from localStorage if present
-          try {
-            const legacy = localStorage.getItem(LOCAL_STORAGE_KEY);
-            if (legacy) {
-              const migrated = base64ToBytes(legacy);
-              await idbSet("sqlite", migrated);
-              localStorage.removeItem(LOCAL_STORAGE_KEY);
-              return migrated;
-            }
-          } catch {}
+          if (key === "sqlite") {
+            try {
+              const legacy = localStorage.getItem("novaplan_sqlite_bytes_v1");
+              if (legacy) {
+                const migrated = base64ToBytes(legacy);
+                await idbSet("sqlite", migrated);
+                localStorage.removeItem("novaplan_sqlite_bytes_v1");
+                return migrated;
+              }
+            } catch {}
+          }
           return null;
         } catch (err) {
           console.warn("IndexedDB unavailable:", err.message);
@@ -2124,7 +2719,7 @@
 
         // Tier 3: localStorage — 5 MB limit, base64 encoded, last resort
         try {
-          const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+          const saved = localStorage.getItem(localKey);
           if (saved) {
             this.mode = "localStorage";
             this.persistWarning = "Saving to localStorage (5 MB limit). Export SQL regularly for a portable backup.";
@@ -2158,6 +2753,10 @@
             tags TEXT,
             jira_url TEXT,
             color TEXT,
+            gantt_label TEXT,
+            gantt_label_position TEXT,
+            gantt_label_color TEXT,
+            gantt_label_font TEXT,
             is_milestone INTEGER DEFAULT 0 CHECK (is_milestone IN (0, 1)),
             is_highlighted INTEGER DEFAULT 0 CHECK (is_highlighted IN (0, 1)),
             parent_id INTEGER,
@@ -2263,7 +2862,13 @@
           ["constraint_type", "ALTER TABLE tasks ADD COLUMN constraint_type TEXT"],
           ["constraint_date", "ALTER TABLE tasks ADD COLUMN constraint_date TEXT"],
           ["jira_url", "ALTER TABLE tasks ADD COLUMN jira_url TEXT"],
-          ["color",    "ALTER TABLE tasks ADD COLUMN color TEXT"]
+          ["color",    "ALTER TABLE tasks ADD COLUMN color TEXT"],
+          ["gantt_label", "ALTER TABLE tasks ADD COLUMN gantt_label TEXT"],
+          ["gantt_label_position", "ALTER TABLE tasks ADD COLUMN gantt_label_position TEXT"],
+          ["gantt_label_color", "ALTER TABLE tasks ADD COLUMN gantt_label_color TEXT"],
+          ["gantt_label_font", "ALTER TABLE tasks ADD COLUMN gantt_label_font TEXT"],
+          ["github_url", "ALTER TABLE tasks ADD COLUMN github_url TEXT"],
+          ["custom_fields_json", "ALTER TABLE tasks ADD COLUMN custom_fields_json TEXT"]
         ];
         for (const [name, statement] of additions) {
           if (!columns.has(name)) db.run(statement);
@@ -2306,22 +2911,37 @@
       },
       async persist() {
         const bytes = this.db.export();
+        const keys = this.getStorageKeyAndFile();
+        const file = keys.file;
+        const key = keys.key;
+        const localKey = keys.localKey;
+
         if (this.fileHandle) {
-          const writable = await this.fileHandle.createWritable();
-          await writable.write(bytes);
-          await writable.close();
-          return;
+          try {
+            if (this.fileHandle.name !== file) {
+              if (navigator.storage?.getDirectory) {
+                const root = await navigator.storage.getDirectory();
+                this.fileHandle = await root.getFileHandle(file, { create: true });
+              }
+            }
+            const writable = await this.fileHandle.createWritable();
+            await writable.write(bytes);
+            await writable.close();
+            return;
+          } catch (err) {
+            console.warn("OPFS write failed, falling back:", err.message);
+          }
         }
         if (this.mode === "IndexedDB") {
           try {
-            await idbSet("sqlite", bytes);
+            await idbSet(key, bytes);
             return;
           } catch (err) {
             console.warn("IndexedDB save failed:", err.message);
           }
         }
         try {
-          localStorage.setItem(LOCAL_STORAGE_KEY, bytesToBase64(bytes));
+          localStorage.setItem(localKey, bytesToBase64(bytes));
         } catch (err) {
           console.warn("localStorage save failed:", err.message);
         }
@@ -2341,7 +2961,7 @@
       async loadSettings() {
         this.ensureDefaultSettings(this.db);
         const rows = execRows(this.db, "SELECT key, value FROM project_settings");
-        const settings = { calendar: { ...DEFAULT_CALENDAR } };
+        const settings = { calendar: { ...DEFAULT_CALENDAR }, ganttLabels: { ...DEFAULT_GANTT_LABELS }, ganttLines: [] };
         for (const row of rows) {
           try {
             settings[row.key] = JSON.parse(row.value);
@@ -2350,6 +2970,10 @@
           }
         }
         settings.calendar = { ...DEFAULT_CALENDAR, ...(settings.calendar || {}) };
+        settings.ganttLabels = { ...DEFAULT_GANTT_LABELS, ...(settings.ganttLabels || {}) };
+        if (!["task", "custom"].includes(settings.ganttLabels.source)) settings.ganttLabels.source = DEFAULT_GANTT_LABELS.source;
+        if (!GANTT_LABEL_POSITIONS.includes(settings.ganttLabels.position)) settings.ganttLabels.position = DEFAULT_GANTT_LABELS.position;
+        settings.ganttLines = sanitizeGanttLines(settings.ganttLines);
         return settings;
       },
       async saveSetting(key, value) {
@@ -2524,6 +3148,9 @@
           if (!keys.length) return;
           const assignments = keys.map(key => `${key} = ?`).join(", ");
           this.db.run(`UPDATE tasks SET ${assignments} WHERE id = ?`, [...keys.map(k => fields[k]), id]);
+          if (keys.includes("parent_id")) {
+            this.resequenceWbsInDb();
+          }
         });
       },
       replaceDependencies(successorId, dependencies) {
@@ -2667,9 +3294,16 @@
             const priority = TASK_PRIORITIES.includes(pick(row, ["Priority", "priority"])) ? pick(row, ["Priority", "priority"]) : "Medium";
             const rawColor = pick(row, ["Color", "color"], "");
             const color = /^#[0-9a-fA-F]{6}$/.test(rawColor) ? rawColor : null;
+            const ganttLabel = pick(row, ["Gantt Text", "Gantt Label", "gantt_label"], "").slice(0, 120);
+            const rawGanttLabelPosition = pick(row, ["Gantt Text Position", "Gantt Label Position", "gantt_label_position"], "").toLowerCase();
+            const ganttLabelPosition = ["above", "below", "middle"].includes(rawGanttLabelPosition) ? rawGanttLabelPosition : "";
+            const rawGanttLabelColor = pick(row, ["Gantt Text Color", "Gantt Label Color", "gantt_label_color"], "");
+            const ganttLabelColor = /^#[0-9a-fA-F]{6}$/.test(rawGanttLabelColor) ? rawGanttLabelColor : "";
+            const rawGanttLabelFont = pick(row, ["Gantt Text Font", "Gantt Label Font", "gantt_label_font"], "");
+            const ganttLabelFont = GANTT_LABEL_FONTS.find(font => font.value === rawGanttLabelFont || font.label.toLowerCase() === rawGanttLabelFont.toLowerCase())?.value || "";
             this.db.run(
-              "INSERT INTO tasks (wbs_code, task_type, title, start_date, end_date, actual_start_date, actual_end_date, duration_hours, actual_hours, remaining_hours, progress, predecessor_ids, resource, comments, tags, jira_url, color, is_milestone, is_highlighted, parent_id, status, priority, sprint_id, manually_scheduled, constraint_type, constraint_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,0,NULL,NULL)",
-              [wbs, DEFAULT_TYPE, title, start, end, null, null, duration, actual, remaining, progress, "", pick(row, ["Resource", "Assignee", "resource"]), pick(row, ["Comments", "Description", "comments"]), pick(row, ["Tags", "Labels", "tags"]), jira, color, /^yes|true|1$/i.test(pick(row, ["Milestone", "is_milestone"])), 0, null, status, priority]
+              "INSERT INTO tasks (wbs_code, task_type, title, start_date, end_date, actual_start_date, actual_end_date, duration_hours, actual_hours, remaining_hours, progress, predecessor_ids, resource, comments, tags, jira_url, color, gantt_label, gantt_label_position, gantt_label_color, gantt_label_font, is_milestone, is_highlighted, parent_id, status, priority, sprint_id, manually_scheduled, constraint_type, constraint_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,0,NULL,NULL)",
+              [wbs, DEFAULT_TYPE, title, start, end, null, null, duration, actual, remaining, progress, "", pick(row, ["Resource", "Assignee", "resource"]), pick(row, ["Comments", "Description", "comments"]), pick(row, ["Tags", "Labels", "tags"]), jira, color, ganttLabel, ganttLabelPosition, ganttLabelColor, ganttLabelFont, /^yes|true|1$/i.test(pick(row, ["Milestone", "is_milestone"])), 0, null, status, priority]
             );
           }
         });
@@ -2683,7 +3317,7 @@
       },
       validateImportedDb(db) {
         const columns = execRows(db, "PRAGMA table_info(tasks)").map(c => c.name);
-        for (const required of ["id", "wbs_code", "title", "start_date", "end_date", "actual_start_date", "actual_end_date", "duration_hours", "actual_hours", "remaining_hours", "progress", "predecessor_ids", "resource", "comments", "tags", "jira_url", "is_milestone", "is_highlighted", "parent_id", "status", "priority", "sprint_id", "manually_scheduled", "constraint_type", "constraint_date"]) {
+        for (const required of ["id", "wbs_code", "title", "start_date", "end_date", "actual_start_date", "actual_end_date", "duration_hours", "actual_hours", "remaining_hours", "progress", "predecessor_ids", "resource", "comments", "tags", "jira_url", "is_milestone", "is_highlighted", "parent_id", "status", "priority", "sprint_id", "manually_scheduled", "constraint_type", "constraint_date", "github_url", "custom_fields_json"]) {
           if (!columns.includes(required)) throw new Error(`Schema mismatch: missing ${required}`);
         }
         const rows = execRows(db, "SELECT * FROM tasks");
@@ -2780,48 +3414,93 @@
       }
     };
 
+    const BASE_COLUMNS = [
+      { label: "", key: "select", width: 34 },
+      { label: "★", key: "is_highlighted", width: 42 },
+      { label: "◆", key: "is_milestone", width: 42 },
+      { label: "WBS", key: "wbs_code", width: 72 },
+      { label: "Type", key: "task_type", editable: true, width: 70 },
+      { label: "Color", key: "color", width: 66, title: "Custom Gantt bar color. Click swatch to pick; ✕ to revert to task-type color." },
+      { label: "Task Name", key: "title", editable: true, width: 240 },
+      { label: "Gantt Text", key: "gantt_label", editable: true, width: 150, title: "Optional custom label shown on the Gantt timeline when enabled in Tools." },
+      { label: "Plan Start", key: "start_date", editable: true, width: 126 },
+      { label: "Plan End", key: "end_date", editable: true, width: 126 },
+      { label: "Actual Start", key: "actual_start_date", editable: true, width: 126 },
+      { label: "Actual End", key: "actual_end_date", editable: true, width: 126 },
+      { label: "Dur", key: "duration", width: 104, title: "Working duration calculated from planned dates and calendar. Read-only." },
+      { label: "Hours", key: "duration_hours", editable: true, width: 82 },
+      { label: "Actual h", key: "actual_hours", editable: true, width: 86 },
+      { label: "Remain h", key: "remaining_hours", editable: true, width: 92 },
+      { label: "EAC h", key: "estimate_at_completion_hours", width: 78, title: "Estimate at Completion = Actual hours + Remaining hours. Read-only." },
+      { label: "%", key: "progress", editable: true, width: 76 },
+      { label: "Status", key: "status", editable: true, width: 118 },
+      { label: "Priority", key: "priority", editable: true, width: 92 },
+      { label: "Crit", key: "is_critical", width: 62, title: "Critical Path — auto-calculated. Shows 'Critical' when a task has zero float (any delay pushes the project end). Requires tasks to have dependencies and different durations. Read-only; not manually editable." },
+      { label: "Float", key: "total_float_days", width: 72, title: "Total Float — days a task can slip before it delays the project end. Auto-calculated from the dependency network. Read-only." },
+      { label: "Sprint", key: "sprint_name", editable: true, width: 126 },
+      { label: "Slip", key: "slippage_status", width: 86, title: "Slippage — auto-detected. 'Slipped' when actual dates exceed planned; 'At risk' when planned end has passed with progress < 100%. Read-only." },
+      { label: "Base End", key: "baseline_end_date", width: 110, title: "Baseline finish date saved via Tools → Set Baseline. Read-only." },
+      { label: "Finish Var", key: "finish_variance_days", width: 90, title: "Days between current Plan End and Baseline End. Positive = later than baseline. Read-only." },
+      { label: "Predecessors", key: "predecessors_display", editable: true, width: 128 },
+      { label: "Resource", key: "resource", editable: true, width: 150 },
+      { label: "Tags", key: "tags", editable: true, width: 140 },
+      { label: "Jira", key: "jira_url", editable: true, width: 150 },
+      { label: "Comments", key: "comments", editable: true, width: 230 },
+      { label: "Actions", key: "actions", width: 86 }
+    ];
+
     const DataGrid = {
-      columns: [
-        { label: "", key: "select", width: 34 },
-        { label: "★", key: "is_highlighted", width: 42 },
-        { label: "◆", key: "is_milestone", width: 42 },
-        { label: "WBS", key: "wbs_code", width: 72 },
-        { label: "Type", key: "task_type", editable: true, width: 70 },
-        { label: "Color", key: "color", width: 66, title: "Custom Gantt bar color. Click swatch to pick; ✕ to revert to task-type color." },
-        { label: "Task Name", key: "title", editable: true, width: 240 },
-        { label: "Plan Start", key: "start_date", editable: true, width: 126 },
-        { label: "Plan End", key: "end_date", editable: true, width: 126 },
-        { label: "Actual Start", key: "actual_start_date", editable: true, width: 126 },
-        { label: "Actual End", key: "actual_end_date", editable: true, width: 126 },
-        { label: "Dur", key: "duration", width: 104, title: "Working duration calculated from planned dates and calendar. Read-only." },
-        { label: "Hours", key: "duration_hours", editable: true, width: 82 },
-        { label: "Actual h", key: "actual_hours", editable: true, width: 86 },
-        { label: "Remain h", key: "remaining_hours", editable: true, width: 92 },
-        { label: "EAC h", key: "estimate_at_completion_hours", width: 78, title: "Estimate at Completion = Actual hours + Remaining hours. Read-only." },
-        { label: "%", key: "progress", editable: true, width: 76 },
-        { label: "Status", key: "status", editable: true, width: 118 },
-        { label: "Priority", key: "priority", editable: true, width: 92 },
-        { label: "Crit", key: "is_critical", width: 62, title: "Critical Path — auto-calculated. Shows 'Critical' when a task has zero float (any delay pushes the project end). Requires tasks to have dependencies and different durations. Read-only; not manually editable." },
-        { label: "Float", key: "total_float_days", width: 72, title: "Total Float — days a task can slip before it delays the project end. Auto-calculated from the dependency network. Read-only." },
-        { label: "Sprint", key: "sprint_name", editable: true, width: 126 },
-        { label: "Slip", key: "slippage_status", width: 86, title: "Slippage — auto-detected. 'Slipped' when actual dates exceed planned; 'At risk' when planned end has passed with progress < 100%. Read-only." },
-        { label: "Base End", key: "baseline_end_date", width: 110, title: "Baseline finish date saved via Tools → Set Baseline. Read-only." },
-        { label: "Finish Var", key: "finish_variance_days", width: 90, title: "Days between current Plan End and Baseline End. Positive = later than baseline. Read-only." },
-        { label: "Predecessors", key: "predecessors_display", editable: true, width: 128 },
-        { label: "Resource", key: "resource", editable: true, width: 150 },
-        { label: "Tags", key: "tags", editable: true, width: 140 },
-        { label: "Jira", key: "jira_url", editable: true, width: 150 },
-        { label: "Comments", key: "comments", editable: true, width: 230 },
-        { label: "Actions", key: "actions", width: 86 }
-      ],
+      get columns() {
+        const list = [...BASE_COLUMNS];
+        const custom = state.customColumns || [];
+        for (const col of custom) {
+          const idx = list.findIndex(c => c.key === "jira_url");
+          if (idx !== -1) {
+            list.splice(idx, 0, { label: col.label, key: col.key, editable: true, width: col.width || 120, isCustom: true });
+          } else {
+            list.push({ label: col.label, key: col.key, editable: true, width: col.width || 120, isCustom: true });
+          }
+        }
+        return list;
+      },
       // Structural columns that cannot be hidden (selection, name, row actions).
       alwaysVisible: ["select", "title", "actions"],
+      columnDrag: null,
       hiddenColumns() {
         return new Set(Array.isArray(state.settings?.hiddenColumns) ? state.settings.hiddenColumns : []);
       },
+      orderedColumns() {
+        const order = Array.isArray(state.settings?.columnOrder) ? state.settings.columnOrder : [];
+        const byKey = new Map(this.columns.map(col => [col.key, col]));
+        const seen = new Set();
+        const ordered = [];
+        for (const key of order) {
+          if (!byKey.has(key) || seen.has(key)) continue;
+          ordered.push(byKey.get(key));
+          seen.add(key);
+        }
+        for (const col of this.columns) {
+          if (seen.has(col.key)) continue;
+          ordered.push(col);
+          seen.add(col.key);
+        }
+        return ordered;
+      },
       visibleColumns() {
         const hidden = this.hiddenColumns();
-        return this.columns.filter(col => this.alwaysVisible.includes(col.key) || !hidden.has(col.key));
+        return this.orderedColumns().filter(col => this.alwaysVisible.includes(col.key) || !hidden.has(col.key));
+      },
+      getPinnedOffsets() {
+        const pinnedKeys = ["select", "wbs_code", "title"];
+        const offsets = {};
+        let currentLeft = 0;
+        for (const col of this.visibleColumns()) {
+          if (pinnedKeys.includes(col.key)) {
+            offsets[col.key] = currentLeft;
+            currentLeft += col.width;
+          }
+        }
+        return offsets;
       },
       render(tasks) {
         el.taskCount.textContent = `${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`;
@@ -2829,20 +3508,29 @@
         table.innerHTML = "";
         const thead = document.createElement("thead");
         const headRow = document.createElement("tr");
+        const pinnedOffsets = this.getPinnedOffsets();
         for (const col of this.visibleColumns()) {
           const th = document.createElement("th");
           th.style.width = `${col.width}px`;
           th.textContent = col.label;
+          th.dataset.colKey = col.key;
+          th.className = "column-draggable";
+          th.title = col.title || "Drag to reorder column";
           if (col.title) th.title = col.title;
+          if (col.key in pinnedOffsets) {
+            th.classList.add("sticky-col");
+            th.style.left = `${pinnedOffsets[col.key]}px`;
+          }
           headRow.appendChild(th);
         }
         thead.appendChild(headRow);
         const tbody = document.createElement("tbody");
-        for (const task of tasks) tbody.appendChild(this.renderRow(task));
+        for (const task of tasks) tbody.appendChild(this.renderRow(task, pinnedOffsets));
         table.append(thead, tbody);
         el.grid.replaceChildren(table);
       },
-      renderRow(task) {
+      renderRow(task, pinnedOffsets) {
+        pinnedOffsets = pinnedOffsets || this.getPinnedOffsets();
         const tr = document.createElement("tr");
         tr.dataset.taskId = task.id;
         if (task.is_highlighted) tr.classList.add("is-highlighted");
@@ -2852,6 +3540,30 @@
         if (task.has_baseline_variance) tr.classList.add("has-baseline-variance");
         if (task.slippage_status === "slipped") tr.classList.add("is-slipped");
         if (task.slippage_status === "at-risk") tr.classList.add("is-at-risk");
+
+        const rules = getConditionalRules();
+        let matchedRowRule = null;
+        for (const rule of rules) {
+          if (!rule.enabled) continue;
+          let match = false;
+          if (rule.condition === "slipped" && task.slippage_status === "slipped") match = true;
+          else if (rule.condition === "critical" && task.is_critical) match = true;
+          else if (rule.condition === "blocked" && String(task.status).toLowerCase() === "blocked") match = true;
+          else if (rule.condition === "completed" && String(task.status).toLowerCase() === "completed") match = true;
+          else if (rule.condition === "high_priority" && ["high", "critical"].includes(String(task.priority).toLowerCase())) match = true;
+
+          if (match && rule.target === "row") {
+            matchedRowRule = rule;
+            break;
+          }
+        }
+
+        if (matchedRowRule) {
+          tr.style.setProperty("--cf-bg", matchedRowRule.color);
+          tr.style.setProperty("--cf-color", matchedRowRule.textColor);
+          tr.classList.add("cf-row-highlight");
+        }
+
         for (const col of this.visibleColumns()) {
           const td = document.createElement("td");
           td.style.width = `${col.width}px`;
@@ -2860,7 +3572,30 @@
             td.dataset.editable = "true";
             td.className = "cell-editable";
           }
+          if (col.key in pinnedOffsets) {
+            td.classList.add("sticky-col");
+            td.style.left = `${pinnedOffsets[col.key]}px`;
+          }
           this.fillCell(td, col, task);
+
+          if (!matchedRowRule) {
+            for (const rule of rules) {
+              if (!rule.enabled || rule.target !== "cell" || rule.column !== col.key) continue;
+              let match = false;
+              if (rule.condition === "slipped" && task.slippage_status === "slipped") match = true;
+              else if (rule.condition === "critical" && task.is_critical) match = true;
+              else if (rule.condition === "blocked" && String(task.status).toLowerCase() === "blocked") match = true;
+              else if (rule.condition === "completed" && String(task.status).toLowerCase() === "completed") match = true;
+              else if (rule.condition === "high_priority" && ["high", "critical"].includes(String(task.priority).toLowerCase())) match = true;
+
+              if (match) {
+                td.style.setProperty("background-color", rule.color, "important");
+                td.style.setProperty("color", rule.textColor, "important");
+                break;
+              }
+            }
+          }
+
           tr.appendChild(td);
         }
         return tr;
@@ -2894,6 +3629,11 @@
           return;
         }
         if (col.key === "actions") {
+          const info = document.createElement("button");
+          info.className = "icon-btn view-details";
+          info.type = "button";
+          info.textContent = "ℹ️";
+          info.title = "View task details";
           const add = document.createElement("button");
           add.className = "icon-btn add-child";
           add.type = "button";
@@ -2904,7 +3644,7 @@
           del.type = "button";
           del.textContent = "×";
           del.title = "Delete task";
-          td.append(add, del);
+          td.append(info, add, del);
           return;
         }
         if (col.key === "title") {
@@ -2969,6 +3709,15 @@
           td.appendChild(link);
           return;
         }
+
+        if (col.isCustom) {
+          let customVals = {};
+          try {
+            customVals = JSON.parse(task.custom_fields_json || "{}");
+          } catch {}
+          td.textContent = text(customVals[col.key]);
+          return;
+        }
         if (col.key === "slippage_status") {
           td.textContent = task.slippage_status === "slipped" ? "Slipped" : task.slippage_status === "at-risk" ? "At risk" : "";
           return;
@@ -3015,6 +3764,10 @@
           await AppShell.deleteTasks([task.id], `Delete "${task.title}" and its subtasks?`);
           return;
         }
+        if (event.target.classList.contains("view-details")) {
+          DetailsDrawer.open(task.id);
+          return;
+        }
         if (event.target.classList.contains("collapse-toggle")) {
           state.collapsedIds.has(task.id) ? state.collapsedIds.delete(task.id) : state.collapsedIds.add(task.id);
           await AppShell.refresh();
@@ -3048,7 +3801,15 @@
       },
       startEdit(td, task) {
         const key = td.dataset.key;
-        const previous = key === "predecessors_display" ? task.predecessors_display : key === "sprint_name" ? task.sprint_name : text(task[key]);
+        const col = this.columns.find(c => c.key === key);
+        let previous = "";
+        if (col && col.isCustom) {
+          let customVals = {};
+          try { customVals = JSON.parse(task.custom_fields_json || "{}"); } catch {}
+          previous = text(customVals[key]);
+        } else {
+          previous = key === "predecessors_display" ? task.predecessors_display : key === "sprint_name" ? task.sprint_name : text(task[key]);
+        }
         td.replaceChildren();
         let input;
         if (["task_type", "status", "priority", "sprint_name"].includes(key)) {
@@ -3112,11 +3873,110 @@
           }
         });
       },
+      columnHeaderFromPoint(x, y) {
+        const target = document.elementFromPoint(x, y);
+        const th = target?.closest?.("th[data-col-key]");
+        return th && el.grid.contains(th) ? th : null;
+      },
+      columnHeaderFromEvent(event) {
+        const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+        const th = target?.closest?.("th[data-col-key]");
+        return th && el.grid.contains(th) ? th : null;
+      },
+      handleColumnMouseDown(event) {
+        if (event.button !== 0) return;
+        const th = this.columnHeaderFromEvent(event);
+        if (!th) return;
+        this.columnDrag = {
+          sourceKey: th.dataset.colKey,
+          startX: event.clientX,
+          startY: event.clientY,
+          active: false
+        };
+      },
+      handleColumnMouseMove(event) {
+        const drag = this.columnDrag;
+        if (!drag) return;
+        drag.lastX = event.clientX;
+        drag.lastY = event.clientY;
+        if (!drag.active) {
+          const distance = Math.abs(event.clientX - drag.startX) + Math.abs(event.clientY - drag.startY);
+          if (distance < 6) return;
+          drag.active = true;
+          this.startColumnAutoScroll();
+        }
+        event.preventDefault();
+        this.updateColumnDragIndicators(event.clientX, event.clientY);
+      },
+      async handleColumnMouseUp(event) {
+        const drag = this.columnDrag;
+        if (!drag) return;
+        this.columnDrag = null;
+        if (drag.scrollFrame) cancelAnimationFrame(drag.scrollFrame);
+        const wasActive = drag.active;
+        const target = this.columnHeaderFromPoint(event.clientX, event.clientY);
+        this.clearColumnDropIndicators();
+        if (!wasActive || !target || target.dataset.colKey === drag.sourceKey) return;
+        event.preventDefault();
+        const rect = target.getBoundingClientRect();
+        await this.reorderColumn(drag.sourceKey, target.dataset.colKey, event.clientX > rect.left + rect.width / 2);
+      },
+      clearColumnDropIndicators() {
+        el.grid.querySelectorAll("th").forEach(th => th.classList.remove("column-dragging", "column-drop-left", "column-drop-right"));
+      },
+      updateColumnDragIndicators(x, y) {
+        const drag = this.columnDrag;
+        if (!drag) return;
+        this.clearColumnDropIndicators();
+        const source = el.grid.querySelector(`th[data-col-key="${drag.sourceKey}"]`);
+        if (source) source.classList.add("column-dragging");
+        const target = this.columnHeaderFromPoint(x, y);
+        if (!target || target.dataset.colKey === drag.sourceKey) return;
+        const rect = target.getBoundingClientRect();
+        target.classList.add(x > rect.left + rect.width / 2 ? "column-drop-right" : "column-drop-left");
+      },
+      startColumnAutoScroll() {
+        const drag = this.columnDrag;
+        if (!drag || drag.scrollFrame) return;
+        const step = () => {
+          const current = this.columnDrag;
+          if (!current?.active) return;
+          const rect = el.grid.getBoundingClientRect();
+          const threshold = 56;
+          let delta = 0;
+          if (current.lastX < rect.left + threshold) {
+            delta = -Math.ceil((rect.left + threshold - current.lastX) / 3);
+          } else if (current.lastX > rect.right - threshold) {
+            delta = Math.ceil((current.lastX - (rect.right - threshold)) / 3);
+          }
+          if (delta) {
+            el.grid.scrollLeft += delta;
+            this.updateColumnDragIndicators(current.lastX, current.lastY);
+          }
+          current.scrollFrame = requestAnimationFrame(step);
+        };
+        drag.scrollFrame = requestAnimationFrame(step);
+      },
+      async reorderColumn(sourceKey, targetKey, placeAfter = false) {
+        const current = this.orderedColumns().map(col => col.key);
+        const from = current.indexOf(sourceKey);
+        let to = current.indexOf(targetKey);
+        if (from < 0 || to < 0 || sourceKey === targetKey) return;
+        const [moved] = current.splice(from, 1);
+        if (from < to) to -= 1;
+        current.splice(placeAfter ? to + 1 : to, 0, moved);
+        state.settings.columnOrder = current;
+        await state.storage.saveSetting("columnOrder", current);
+        await AppShell.refresh();
+        showToast("Column order updated", "success");
+      },
       async commitEdit(td, task, key, value, previous) {
         try {
           const fields = this.normalizeEdit(task, key, value);
+          const shouldScrollGantt = ["start_date", "end_date", "actual_start_date", "actual_end_date", "duration_hours", "predecessors_display"].includes(key);
           await state.storage.updateTask(task.id, fields);
           await AppShell.refresh();
+          if (shouldScrollGantt) GanttChart.scrollToTask(task.id);
         } catch (error) {
           showToast(error.message, "error");
           await AppShell.refresh();
@@ -3124,14 +3984,23 @@
       },
       normalizeEdit(task, key, value) {
         const trimmed = text(value).trim();
+        const isCustomCol = (state.customColumns || []).some(c => c.key === key);
+        if (isCustomCol) {
+          let customVals = {};
+          try {
+            customVals = JSON.parse(task.custom_fields_json || "{}");
+          } catch {}
+          customVals[key] = trimmed;
+          return { custom_fields_json: JSON.stringify(customVals) };
+        }
+
         if (key === "title") {
           if (!trimmed) throw new Error("Task name is required");
           return { title: trimmed };
         }
         if (key === "start_date") {
           if (!isValidIsoDate(trimmed)) throw new Error("Start date must be valid");
-          if (task.end_date && trimmed > task.end_date) throw new Error("Start date must be before end date");
-          return { start_date: trimmed };
+          return { start_date: trimmed, end_date: shiftedEndForStart(task, trimmed) };
         }
         if (key === "end_date") {
           if (!isValidIsoDate(trimmed)) throw new Error("End date must be valid");
@@ -3180,6 +4049,10 @@
         }
         if (key === "resource") return { resource: trimmed.slice(0, 100) };
         if (key === "comments") return { comments: trimmed.slice(0, 2000) };
+        if (key === "gantt_label") {
+          const ganttLabel = trimmed.slice(0, 120);
+          return { gantt_label: ganttLabel, gantt_label_position: ganttLabel ? (task.gantt_label_position || "above") : "" };
+        }
         if (key === "tags") return { tags: splitCsv(trimmed).join(",") };
         if (key === "jira_url") return { jira_url: normalizeJiraUrl(trimmed) };
         if (key === "task_type") return { task_type: TaskTypes[trimmed] ? trimmed : DEFAULT_TYPE };
@@ -3187,6 +4060,144 @@
         if (key === "priority") return { priority: TASK_PRIORITIES.includes(trimmed) ? trimmed : "Medium" };
         if (key === "sprint_name") return { sprint_id: trimmed ? Number(trimmed) : null };
         return {};
+      }
+    };
+
+    const ContextMenu = {
+      activeTaskId: null,
+      show(taskId, x, y) {
+        this.activeTaskId = taskId;
+        const task = findTask(taskId);
+        if (!task) return;
+
+        el.contextMenu.replaceChildren();
+
+        const items = [
+          { label: "👁️ View Details", action: () => DetailsDrawer.open(this.activeTaskId) },
+          { separator: true },
+          { label: "➡️ Indent Task", action: () => this.indent() },
+          { label: "⬅️ Outdent Task", action: () => this.outdent() },
+          { separator: true },
+          { label: "🏃 Assign Sprint", action: () => this.assignSprint() },
+          { label: "🎨 Set Accent Color", action: () => this.setAccentColor() },
+          { separator: true },
+          { label: "🗑️ Delete Task", action: () => this.delete(), danger: true }
+        ];
+
+        items.forEach(item => {
+          if (item.separator) {
+            const div = document.createElement("div");
+            div.className = "context-menu-separator";
+            el.contextMenu.appendChild(div);
+          } else {
+            const btn = document.createElement("div");
+            btn.className = "context-menu-item" + (item.danger ? " danger" : "");
+            btn.textContent = item.label;
+            btn.addEventListener("click", () => {
+              el.contextMenu.style.display = "none";
+              item.action();
+            });
+            el.contextMenu.appendChild(btn);
+          }
+        });
+
+        el.contextMenu.style.left = `${x}px`;
+        el.contextMenu.style.top = `${y}px`;
+        el.contextMenu.style.display = "block";
+
+        const rect = el.contextMenu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+          el.contextMenu.style.left = `${window.innerWidth - rect.width - 8}px`;
+        }
+        if (rect.bottom > window.innerHeight) {
+          el.contextMenu.style.top = `${window.innerHeight - rect.height - 8}px`;
+        }
+      },
+      async indent() {
+        if (this.activeTaskId == null) return;
+        const taskId = this.activeTaskId;
+        const sorted = sortTasksByWbs(state.tasks);
+        const idx = sorted.findIndex(t => t.id === taskId);
+        if (idx <= 0) {
+          showToast("Cannot indent the first task", "error");
+          return;
+        }
+        const preceding = sorted[idx - 1];
+        await state.storage.updateTask(taskId, { parent_id: preceding.id });
+        await AppShell.refresh();
+        showToast("Task indented", "success");
+      },
+      async outdent() {
+        if (this.activeTaskId == null) return;
+        const taskId = this.activeTaskId;
+        const task = findTask(taskId);
+        if (!task || task.parent_id == null) {
+          showToast("Task is already at the root level", "error");
+          return;
+        }
+        const parent = findTask(task.parent_id);
+        const grandparentId = parent ? parent.parent_id : null;
+        await state.storage.updateTask(taskId, { parent_id: grandparentId });
+        await AppShell.refresh();
+        showToast("Task outdented", "success");
+      },
+      async assignSprint() {
+        if (this.activeTaskId == null) return;
+        const task = findTask(this.activeTaskId);
+        if (!task) return;
+
+        const sprintOptions = [
+          { value: "", label: "None (Backlog)" },
+          ...state.sprints.map(s => ({ value: String(s.id), label: s.name }))
+        ];
+
+        const res = await showFormDialog({
+          title: "Assign Sprint",
+          fields: [
+            {
+              name: "sprintId",
+              label: "Select Sprint",
+              type: "select",
+              value: task.sprint_id != null ? String(task.sprint_id) : "",
+              options: sprintOptions
+            }
+          ]
+        });
+
+        if (res) {
+          const newSprintId = res.sprintId ? Number(res.sprintId) : null;
+          await state.storage.updateTask(task.id, { sprint_id: newSprintId });
+          await AppShell.refresh();
+          showToast("Sprint assigned successfully", "success");
+        }
+      },
+      async setAccentColor() {
+        if (this.activeTaskId == null) return;
+        const task = findTask(this.activeTaskId);
+        if (!task) return;
+
+        const res = await showFormDialog({
+          title: "Set Custom Accent Color",
+          fields: [
+            {
+              name: "color",
+              label: "Custom Accent Color",
+              type: "color",
+              value: task.color || "#666688"
+            }
+          ]
+        });
+
+        if (res) {
+          const hex = res.color;
+          await state.storage.updateTask(task.id, { color: /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : "" });
+          await AppShell.refresh();
+          showToast("Accent color updated", "success");
+        }
+      },
+      async delete() {
+        if (this.activeTaskId == null) return;
+        await AppShell.deleteTasks([this.activeTaskId], "Delete this task and all of its subtasks?");
       }
     };
 
@@ -3203,7 +4214,10 @@
           el.ganttBody.replaceChildren(empty);
           return;
         }
-        const timelineDates = scheduled.flatMap(t => [t.start_date, t.end_date, t.actual_start_date, t.actual_end_date, t.baseline_start_date, t.baseline_end_date].filter(isValidIsoDate));
+        const customLineDates = sanitizeGanttLines(state.settings?.ganttLines).filter(line => line.type === "date").map(line => line.date);
+        const timelineDates = scheduled
+          .flatMap(t => [t.start_date, t.end_date, t.actual_start_date, t.actual_end_date, t.baseline_start_date, t.baseline_end_date].filter(isValidIsoDate))
+          .concat(customLineDates);
         const minDate = timelineDates.sort()[0];
         const maxDate = timelineDates.sort().at(-1);
         const totalDays = daysBetween(minDate, maxDate) + 1;
@@ -3213,6 +4227,24 @@
         el.timelineRange.textContent = `${minDate} to ${maxDate}`;
         el.ganttHeader.replaceChildren(this.buildHeaderSvg(minDate, maxDate, svgWidth));
         el.ganttBody.replaceChildren(this.buildBodySvg(tasks, minDate, svgWidth, svgHeight));
+      },
+      scrollToTask(taskId) {
+        const bar = el.ganttBody.querySelector(`.gantt-bar[data-task-id="${Number(taskId)}"]`);
+        if (!bar || typeof bar.getBBox !== "function") return false;
+        const box = bar.getBBox();
+        const maxLeft = Math.max(0, el.ganttBody.scrollWidth - el.ganttBody.clientWidth);
+        const maxTop = Math.max(0, el.ganttBody.scrollHeight - el.ganttBody.clientHeight);
+        let left = el.ganttBody.scrollLeft;
+        let top = el.ganttBody.scrollTop;
+        if (box.x < left || box.x + box.width > left + el.ganttBody.clientWidth) {
+          left = clamp(box.x - (el.ganttBody.clientWidth - box.width) / 2, 0, maxLeft);
+        }
+        if (box.y < top || box.y + box.height > top + el.ganttBody.clientHeight) {
+          top = clamp(box.y - (el.ganttBody.clientHeight - box.height) / 2, 0, maxTop);
+        }
+        el.ganttBody.scrollTo({ left, top });
+        el.ganttHeader.scrollLeft = left;
+        return true;
       },
       dateToX(minDate, dateStr) {
         return 20 + daysBetween(minDate, dateStr) * pxPerDay();
@@ -3277,6 +4309,7 @@
           const x = this.dateToX(minDate, task.start_date);
           const w = Math.max(4, durationDays(task) * pxPerDay());
           const color = task.is_summary ? "#7d8590" : (task.color || TaskTypes[task.task_type]?.color || "#666688");
+          const label = this.ganttLabel(task, w);
           const dangerClr = cssVar("--danger") || "#ff5f7a";
           const orangeClr = cssVar("--neon-orange") || "#ff9900";
           const nearClr = document.body.classList.contains("light") ? "#d97706" : "#ffd89a";
@@ -3298,6 +4331,7 @@
             }
             if (task.is_highlighted) diamond.setAttribute("filter", "url(#glow-cyan)");
             svg.appendChild(diamond);
+            if (label.text) svg.appendChild(this.ganttLabelNode(x + 14, y, label.text, label.position, 0, label, task.id));
           } else {
             const bar = this.rect(x, y, w, BAR_HEIGHT, color, 3);
             bar.classList.add("gantt-bar");
@@ -3315,7 +4349,10 @@
             svg.appendChild(bar);
             const progress = this.rect(x, y, w * (task.progress / 100), BAR_HEIGHT, this.darken(color), 3);
             progress.classList.add("gantt-progress");
+            progress.setAttribute("pointer-events", "none");
+            progress.dataset.taskId = task.id;
             svg.appendChild(progress);
+            if (label.text) svg.appendChild(this.ganttLabelNode(x, y, label.text, label.position, w, label, task.id));
           }
           if (isValidIsoDate(task.actual_start_date) && isValidIsoDate(task.actual_end_date)) {
             const ax = this.dateToX(minDate, task.actual_start_date);
@@ -3351,7 +4388,286 @@
             svg.appendChild(path);
           }
         }
+        this.appendGanttLineOverlays(svg, tasks, minDate, width, height);
         return svg;
+      },
+      appendGanttLineOverlays(svg, tasks, minDate, width, height) {
+        const lineGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        lineGroup.dataset.role = "gantt-line-overlays";
+        lineGroup.setAttribute("pointer-events", "none");
+        const addOverlayLine = ({ x1, y1, x2, y2, color, thickness, role, type, dash = "" }) => {
+          const overlay = this.line(x1, y1, x2, y2, color);
+          overlay.dataset.role = role;
+          if (type) overlay.dataset.lineType = type;
+          overlay.setAttribute("stroke-width", thickness);
+          overlay.setAttribute("stroke-linecap", "round");
+          overlay.setAttribute("vector-effect", "non-scaling-stroke");
+          overlay.setAttribute("pointer-events", "none");
+          if (dash) overlay.setAttribute("stroke-dasharray", dash);
+          lineGroup.appendChild(overlay);
+        };
+        const today = todayIso();
+        const lastDayOffset = Math.max(0, Math.ceil((width - 40) / pxPerDay()) - 1);
+        const todayOffset = isValidIsoDate(minDate) ? daysBetween(minDate, today) : -1;
+        if (todayOffset >= 0 && todayOffset <= lastDayOffset) {
+          const x = this.dateToX(minDate, today);
+          addOverlayLine({
+            x1: x,
+            y1: 0,
+            x2: x,
+            y2: height,
+            color: cssVar("--danger") || "#ff5f7a",
+            thickness: 2,
+            role: "current-date-line",
+            type: "date",
+            dash: "6 5"
+          });
+        }
+        const taskRows = new Map(tasks.map((task, index) => [Number(task.id), index]));
+        for (const line of sanitizeGanttLines(state.settings?.ganttLines)) {
+          if (line.type === "date") {
+            const x = this.dateToX(minDate, line.date);
+            if (x < 0 || x > width) continue;
+            addOverlayLine({
+              x1: x,
+              y1: 0,
+              x2: x,
+              y2: height,
+              color: line.color,
+              thickness: line.thickness,
+              role: "custom-gantt-line",
+              type: "date"
+            });
+          } else {
+            const index = taskRows.get(Number(line.task_id));
+            if (index == null) continue;
+            const y = index * ROW_HEIGHT + ROW_HEIGHT / 2;
+            addOverlayLine({
+              x1: 0,
+              y1: y,
+              x2: width,
+              y2: y,
+              color: line.color,
+              thickness: line.thickness,
+              role: "custom-gantt-line",
+              type: "task"
+            });
+          }
+        }
+        svg.appendChild(lineGroup);
+      },
+      ganttLabel(task, width) {
+        const settings = { ...DEFAULT_GANTT_LABELS, ...(state.settings?.ganttLabels || {}) };
+        const custom = text(task.gantt_label).trim();
+        const hasCustom = Boolean(custom);
+        const raw = hasCustom ? custom : settings.source === "custom" ? "" : task.title;
+        const value = text(raw).trim();
+        if (!value) return { text: "", position: settings.position };
+        const position = hasCustom
+          ? (["above", "below", "middle"].includes(task.gantt_label_position) ? task.gantt_label_position : "above")
+          : (GANTT_LABEL_POSITIONS.includes(settings.position) ? settings.position : DEFAULT_GANTT_LABELS.position);
+        const inside = position === "inside" || position === "middle";
+        if (inside && Number(width) < 24) return { text: "", position };
+        const maxChars = inside
+          ? Math.max(1, Math.floor((Number(width) - 10) / 7))
+          : 36;
+        return {
+          text: value.length > maxChars ? `${value.slice(0, Math.max(1, maxChars - 3))}...` : value,
+          position,
+          color: /^#[0-9a-fA-F]{6}$/.test(task.gantt_label_color || "") ? task.gantt_label_color : "",
+          font: GANTT_LABEL_FONTS.some(font => font.value === task.gantt_label_font) ? task.gantt_label_font : ""
+        };
+      },
+      ganttLabelNode(x, y, value, position, width = 0, style = {}, taskId) {
+        const inside = position === "inside" || position === "middle";
+        const labelX = inside ? x + width / 2 : x;
+        const labelY = inside ? y + BAR_HEIGHT / 2 + 4 : position === "below" ? y + BAR_HEIGHT + 8 : y - 3;
+        const fill = style.color || (inside ? "#ffffff" : (cssVar("--text-primary") || "#e6edf3"));
+        const label = this.textNode(labelX, labelY, value, fill, 11);
+        if (taskId) label.dataset.taskId = taskId;
+        label.classList.add("gantt-label");
+        label.setAttribute("pointer-events", "none");
+        if (style.font) label.setAttribute("font-family", style.font);
+        if (inside) {
+          label.setAttribute("font-weight", "700");
+          label.setAttribute("dominant-baseline", "middle");
+          label.setAttribute("text-anchor", "middle");
+        }
+        return label;
+      },
+      async editTimelineText(task) {
+        const result = await showGanttTimelineTextDialog(task);
+        if (!result) return;
+        if (result.clear || !result.text.trim()) {
+          await state.storage.updateTask(task.id, { gantt_label: "", gantt_label_position: "", gantt_label_color: "", gantt_label_font: "" });
+          await AppShell.refresh();
+          GanttChart.scrollToTask(task.id);
+          return;
+        }
+        await state.storage.updateTask(task.id, {
+          gantt_label: result.text.trim().slice(0, 120),
+          gantt_label_position: result.position,
+          gantt_label_color: result.color,
+          gantt_label_font: result.font
+        });
+        await AppShell.refresh();
+        GanttChart.scrollToTask(task.id);
+      },
+      startDrag(e, bar, task) {
+        const rect = bar.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        let mode = "drag";
+        if (!task.is_milestone) {
+          if (clickX < 8) {
+            mode = "left-resize";
+          } else if (rect.width - clickX < 8) {
+            mode = "right-resize";
+          }
+        }
+        GanttChart.dragState = {
+          task,
+          bar,
+          mode,
+          startX: e.clientX,
+          origStart: task.start_date,
+          origEnd: task.end_date,
+          origX: GanttChart.dateToX(state.gantt.minDate, task.start_date),
+          origW: Math.max(4, durationDays(task) * pxPerDay()),
+          dragged: false,
+          minDate: state.gantt.minDate
+        };
+        GanttChart.wasDragged = false;
+
+        GanttChart._onDragMove = GanttChart._onDragMove || (ev => GanttChart.dragMove(ev));
+        GanttChart._onDragEnd = GanttChart._onDragEnd || (ev => GanttChart.dragEnd(ev));
+
+        window.addEventListener("mousemove", GanttChart._onDragMove);
+        window.addEventListener("mouseup", GanttChart._onDragEnd);
+      },
+      dragMove(e) {
+        const ds = GanttChart.dragState;
+        if (!ds) return;
+
+        const dx = e.clientX - ds.startX;
+        if (!ds.dragged) {
+          if (Math.abs(dx) > 3) {
+            ds.dragged = true;
+          } else {
+            return;
+          }
+        }
+
+        const svg = ds.bar.ownerSVGElement;
+        if (!svg) return;
+
+        const barEl = ds.bar;
+        const progressEl = svg.querySelector(`.gantt-progress[data-task-id="${ds.task.id}"]`);
+        const labelEl = svg.querySelector(`.gantt-label[data-task-id="${ds.task.id}"]`);
+
+        if (ds.task.is_milestone) {
+          const cx = Number(barEl.dataset.cx);
+          const cy = Number(barEl.dataset.cy);
+          const r = Number(barEl.dataset.radius);
+          const newCx = cx + dx;
+          barEl.setAttribute("points", `${newCx},${cy - r} ${newCx + r},${cy} ${newCx},${cy + r} ${newCx - r},${cy}`);
+
+          if (labelEl) {
+            const pos = ds.task.gantt_label_position || "above";
+            const labelX = pos === "above" || pos === "below" ? newCx : newCx + 14;
+            labelEl.setAttribute("x", labelX);
+          }
+        } else {
+          if (ds.mode === "drag") {
+            const newX = ds.origX + dx;
+            barEl.setAttribute("x", newX);
+            if (progressEl) progressEl.setAttribute("x", newX);
+
+            if (labelEl) {
+              const pos = ds.task.gantt_label_position || "above";
+              const inside = pos === "inside" || pos === "middle";
+              const labelX = inside ? newX + ds.origW / 2 : newX;
+              labelEl.setAttribute("x", labelX);
+            }
+          } else if (ds.mode === "left-resize") {
+            const newX = ds.origX + dx;
+            const newW = Math.max(4, ds.origW - dx);
+            barEl.setAttribute("x", newX);
+            barEl.setAttribute("width", newW);
+            if (progressEl) {
+              progressEl.setAttribute("x", newX);
+              progressEl.setAttribute("width", newW * (ds.task.progress / 100));
+            }
+            if (labelEl) {
+              const pos = ds.task.gantt_label_position || "above";
+              const inside = pos === "inside" || pos === "middle";
+              const labelX = inside ? newX + newW / 2 : newX;
+              labelEl.setAttribute("x", labelX);
+            }
+          } else if (ds.mode === "right-resize") {
+            const newW = Math.max(4, ds.origW + dx);
+            barEl.setAttribute("width", newW);
+            if (progressEl) {
+              progressEl.setAttribute("width", newW * (ds.task.progress / 100));
+            }
+            if (labelEl) {
+              const pos = ds.task.gantt_label_position || "above";
+              const inside = pos === "inside" || pos === "middle";
+              const labelX = inside ? ds.origX + newW / 2 : ds.origX;
+              labelEl.setAttribute("x", labelX);
+            }
+          }
+        }
+      },
+      async dragEnd(e) {
+        const ds = GanttChart.dragState;
+        if (!ds) return;
+
+        window.removeEventListener("mousemove", GanttChart._onDragMove);
+        window.removeEventListener("mouseup", GanttChart._onDragEnd);
+        GanttChart.dragState = null;
+
+        if (ds.dragged) {
+          GanttChart.wasDragged = true;
+          const dx = e.clientX - ds.startX;
+          const deltaDays = Math.round(dx / pxPerDay());
+
+          let newStart = ds.origStart;
+          let newEnd = ds.origEnd;
+
+          if (ds.task.is_milestone) {
+            newStart = addDays(ds.origStart, deltaDays);
+            newEnd = newStart;
+          } else {
+            if (ds.mode === "drag") {
+              newStart = addDays(ds.origStart, deltaDays);
+              newEnd = addDays(ds.origEnd, deltaDays);
+            } else if (ds.mode === "left-resize") {
+              newStart = addDays(ds.origStart, deltaDays);
+              if (newStart > newEnd) newStart = newEnd;
+            } else if (ds.mode === "right-resize") {
+              newEnd = addDays(ds.origEnd, deltaDays);
+              if (newEnd < newStart) newEnd = newStart;
+            }
+          }
+
+          try {
+            const workingDaysCount = workingDaysBetween(newStart, newEnd);
+            const duration_hours = ds.task.is_milestone ? 0 : workingDaysCount * workingHoursPerDay();
+
+            await state.storage.updateTask(ds.task.id, {
+              start_date: newStart,
+              end_date: newEnd,
+              duration_hours
+            });
+
+            await cascadeAutoSchedule(ds.task.id);
+            await AppShell.refresh();
+            showToast("Task schedule updated", "success");
+          } catch (error) {
+            showToast(error.message, "error");
+            await AppShell.refresh();
+          }
+        }
       },
       svg(width, height) {
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -3374,6 +4690,9 @@
         const p = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
         p.setAttribute("points", `${cx},${cy - radius} ${cx + radius},${cy} ${cx},${cy + radius} ${cx - radius},${cy}`);
         p.setAttribute("fill", fill);
+        p.dataset.cx = cx;
+        p.dataset.cy = cy;
+        p.dataset.radius = radius;
         return p;
       },
       line(x1, y1, x2, y2, stroke) {
@@ -3551,47 +4870,62 @@
       },
       taskRows(tasks) {
         const byId = new Map(tasks.map(t => [t.id, t]));
-        return tasks.map(t => ({
-          WBS: t.wbs_code,
-          Type: `${t.task_type} ${TaskTypes[t.task_type]?.label || ""}`.trim(),
-          "Task Name": t.title,
-          "Planned Start Date": t.start_date,
-          "Planned End Date": t.end_date,
-          "Actual Start Date": t.actual_start_date,
-          "Actual End Date": t.actual_end_date,
-          "Duration Hours": t.duration_hours,
-          "Duration Days": formatNumber(t.duration_days),
-          "Actual Hours": t.actual_hours,
-          "Remaining Hours": t.remaining_hours,
-          "Estimate At Completion Hours": t.estimate_at_completion_hours,
-          "% Complete": t.progress,
-          "Critical Path": t.is_critical ? "Yes" : "No",
-          "Total Float Days": t.total_float_days,
-          Status: t.status,
-          Priority: t.priority,
-          Sprint: t.sprint_name || "Backlog",
-          Slippage: t.slippage_status === "slipped" ? "Slipped" : t.slippage_status === "at-risk" ? "At risk" : "",
-          Milestone: t.is_milestone ? "Yes" : "No",
-          Summary: t.is_summary ? "Yes" : "No",
-          "Milestone Count": t.milestone_count,
-          "Slipped Count": t.slipped_count,
-          "At Risk Count": t.at_risk_count,
-          "Resource Summary": t.resource_summary,
-          "Baseline Start Date": t.baseline_start_date,
-          "Baseline End Date": t.baseline_end_date,
-          "Start Variance Days": t.start_variance_days,
-          "Finish Variance Days": t.finish_variance_days,
-          "Duration Variance Hours": t.duration_variance_hours,
-          "Progress Variance": t.progress_variance,
-          Predecessors: t.predecessors_display,
-          Resource: t.resource,
-          Tags: t.tags,
-          "Jira Link": t.jira_url,
-          Comments: t.comments,
-          Color: t.color || "",
-          Highlighted: t.is_highlighted ? "Yes" : "No",
-          "Parent WBS": t.parent_id ? byId.get(t.parent_id)?.wbs_code || "" : ""
-        }));
+        return tasks.map(t => {
+          const rowObj = {
+            WBS: t.wbs_code,
+            Type: `${t.task_type} ${TaskTypes[t.task_type]?.label || ""}`.trim(),
+            "Task Name": t.title,
+            "Gantt Text": t.gantt_label || "",
+            "Gantt Text Position": t.gantt_label_position || "",
+            "Gantt Text Color": t.gantt_label_color || "",
+            "Gantt Text Font": GANTT_LABEL_FONTS.find(font => font.value === t.gantt_label_font)?.label || "",
+            "Planned Start Date": t.start_date,
+            "Planned End Date": t.end_date,
+            "Actual Start Date": t.actual_start_date,
+            "Actual End Date": t.actual_end_date,
+            "Duration Hours": t.duration_hours,
+            "Duration Days": formatNumber(t.duration_days),
+            "Actual Hours": t.actual_hours,
+            "Remaining Hours": t.remaining_hours,
+            "Estimate At Completion Hours": t.estimate_at_completion_hours,
+            "% Complete": t.progress,
+            "Critical Path": t.is_critical ? "Yes" : "No",
+            "Total Float Days": t.total_float_days,
+            Status: t.status,
+            Priority: t.priority,
+            Sprint: t.sprint_name || "Backlog",
+            Slippage: t.slippage_status === "slipped" ? "Slipped" : t.slippage_status === "at-risk" ? "At risk" : "",
+            Milestone: t.is_milestone ? "Yes" : "No",
+            Summary: t.is_summary ? "Yes" : "No",
+            "Milestone Count": t.milestone_count,
+            "Slipped Count": t.slipped_count,
+            "At Risk Count": t.at_risk_count,
+            "Resource Summary": t.resource_summary,
+            "Baseline Start Date": t.baseline_start_date,
+            "Baseline End Date": t.baseline_end_date,
+            "Start Variance Days": t.start_variance_days,
+            "Finish Variance Days": t.finish_variance_days,
+            "Duration Variance Hours": t.duration_variance_hours,
+            "Progress Variance": t.progress_variance,
+            Predecessors: t.predecessors_display,
+            Resource: t.resource,
+            Tags: t.tags,
+            "Jira Link": t.jira_url,
+            Comments: t.comments,
+            Color: t.color || "",
+            Highlighted: t.is_highlighted ? "Yes" : "No",
+            "Parent WBS": t.parent_id ? byId.get(t.parent_id)?.wbs_code || "" : ""
+          };
+          const custom = state.customColumns || [];
+          let customVals = {};
+          try {
+            customVals = JSON.parse(t.custom_fields_json || "{}");
+          } catch {}
+          for (const col of custom) {
+            rowObj[col.label] = customVals[col.key] || "";
+          }
+          return rowObj;
+        });
       },
       dependencyRows(tasks) {
         const byId = new Map(tasks.map(t => [t.id, t]));
@@ -3809,6 +5143,280 @@
       }
     };
 
+    const DetailsDrawer = {
+      activeTaskId: null,
+      open(taskId) {
+        this.activeTaskId = taskId;
+        const task = findTask(taskId);
+        if (!task) return;
+
+        el.detailsDrawer.style.display = "flex";
+        setTimeout(() => el.detailsDrawer.classList.add("show"), 10);
+        el.detailsDrawer.setAttribute("aria-hidden", "false");
+
+        this.render();
+      },
+      close() {
+        el.detailsDrawer.classList.remove("show");
+        el.detailsDrawer.setAttribute("aria-hidden", "true");
+        setTimeout(() => {
+          if (!el.detailsDrawer.classList.contains("show")) {
+            el.detailsDrawer.style.display = "none";
+          }
+        }, 280);
+        this.activeTaskId = null;
+      },
+      render() {
+        const task = findTask(this.activeTaskId);
+        if (!task) return;
+
+        el.detailsBody.replaceChildren();
+
+        this.addFieldGroup("Task Name", "text", "title", task.title);
+        this.addFieldGroup("Task Type", "select", "task_type", task.task_type, Object.keys(TaskTypes).map(t => ({ value: t, label: `${t} ${TaskTypes[t].label}` })));
+        this.addFieldGroup("Status", "select", "status", task.status, TASK_STATUSES.map(s => ({ value: s, label: s })));
+        this.addFieldGroup("Priority", "select", "priority", task.priority, TASK_PRIORITIES.map(p => ({ value: p, label: p })));
+        
+        this.addFieldGroup("Plan Start", "date", "start_date", task.start_date || "");
+        this.addFieldGroup("Plan End", "date", "end_date", task.end_date || "");
+        this.addFieldGroup("Actual Start", "date", "actual_start_date", task.actual_start_date || "");
+        this.addFieldGroup("Actual End", "date", "actual_end_date", task.actual_end_date || "");
+        this.addFieldGroup("Progress (%)", "number", "progress", task.progress, null, 0, 100);
+
+        this.addFieldGroup("Resource (Assignee)", "text", "resource", task.resource || "");
+        
+        const sprintOpts = [{ value: "", label: "None (Backlog)" }, ...state.sprints.map(s => ({ value: String(s.id), label: s.name }))];
+        this.addFieldGroup("Sprint", "select", "sprint_id", task.sprint_id != null ? String(task.sprint_id) : "", sprintOpts);
+
+        this.addFieldGroup("Predecessors", "text", "predecessor_ids", task.predecessor_ids || "", null, null, null, "e.g. 1, 2");
+
+        const customColumns = state.customColumns || [];
+        if (customColumns.length > 0) {
+          let customVals = {};
+          try { customVals = JSON.parse(task.custom_fields_json || "{}"); } catch {}
+          customColumns.forEach(col => {
+            this.addFieldGroup(col.label, "text", `custom_${col.key}`, customVals[col.key] || "", null, null, null, null, true);
+          });
+        }
+
+        this.addFieldGroup("Accent Color", "color", "color", task.color || "");
+        this.addFieldGroup("Comments", "textarea", "comments", task.comments || "");
+      },
+      addFieldGroup(label, type, key, value, options = null, min = null, max = null, placeholder = "", isCustomField = false) {
+        const group = document.createElement("div");
+        group.className = "details-group";
+
+        const lbl = document.createElement("label");
+        lbl.textContent = label;
+        group.appendChild(lbl);
+
+        let input;
+        if (type === "select") {
+          input = document.createElement("select");
+          input.className = "details-select";
+          (options || []).forEach(opt => {
+            const o = document.createElement("option");
+            o.value = opt.value;
+            o.textContent = opt.label;
+            input.appendChild(o);
+          });
+          input.value = value;
+        } else if (type === "textarea") {
+          input = document.createElement("textarea");
+          input.className = "details-textarea";
+          input.rows = 4;
+          input.value = value;
+          if (placeholder) input.placeholder = placeholder;
+        } else {
+          input = document.createElement("input");
+          input.type = type;
+          input.className = "details-input";
+          input.value = value;
+          if (min !== null) input.min = min;
+          if (max !== null) input.max = max;
+          if (placeholder) input.placeholder = placeholder;
+        }
+
+        input.addEventListener("change", async () => {
+          const task = findTask(this.activeTaskId);
+          if (!task) return;
+
+          let val = input.value;
+          if (type === "number") val = val ? Number(val) : 0;
+          if (key === "sprint_id") val = val ? Number(val) : null;
+
+          const fields = {};
+          if (isCustomField) {
+            const colKey = key.replace("custom_", "");
+            let customVals = {};
+            try { customVals = JSON.parse(task.custom_fields_json || "{}"); } catch {}
+            customVals[colKey] = val;
+            fields.custom_fields_json = JSON.stringify(customVals);
+          } else {
+            fields[key] = val;
+          }
+
+          try {
+            await state.storage.updateTask(task.id, fields);
+            if (key === "start_date" || key === "end_date") {
+              if (typeof cascadeAutoSchedule === "function") {
+                cascadeAutoSchedule(task.id);
+              }
+            }
+            await AppShell.refresh();
+            this.render();
+          } catch (err) {
+            showToast(`Update failed: ${err.message}`, "error");
+          }
+        });
+
+        group.appendChild(input);
+        el.detailsBody.appendChild(group);
+      }
+    };
+
+    const CommandPalette = {
+      activeIdx: -1,
+      filteredItems: [],
+      show() {
+        el.commandPalette.style.display = "flex";
+        el.commandPalette.classList.add("show");
+        el.commandPalette.setAttribute("aria-hidden", "false");
+        el.commandInput.value = "";
+        el.commandInput.focus();
+        this.renderResults();
+      },
+      close() {
+        el.commandPalette.classList.remove("show");
+        el.commandPalette.setAttribute("aria-hidden", "true");
+        setTimeout(() => {
+          if (!el.commandPalette.classList.contains("show")) {
+            el.commandPalette.style.display = "none";
+          }
+        }, 150);
+      },
+      getItems() {
+        const items = [
+          { label: "Go to Split View", subtitle: "Switch view mode", action: () => { el.viewSelect.value = "split"; AppShell.handleViewChange(); } },
+          { label: "Go to Grid View", subtitle: "Switch view mode", action: () => { el.viewSelect.value = "grid"; AppShell.handleViewChange(); } },
+          { label: "Go to Gantt View", subtitle: "Switch view mode", action: () => { el.viewSelect.value = "gantt"; AppShell.handleViewChange(); } },
+          { label: "Go to Board View", subtitle: "Switch view mode", action: () => { el.viewSelect.value = "board"; AppShell.handleViewChange(); } },
+          { label: "Go to Dashboard View", subtitle: "Switch view mode", action: () => { el.viewSelect.value = "dashboard"; AppShell.handleViewChange(); } },
+          { label: "Go to Workload View", subtitle: "Switch view mode", action: () => { el.viewSelect.value = "workload"; AppShell.handleViewChange(); } },
+          { label: "Go to RAID View", subtitle: "Switch view mode", action: () => { el.viewSelect.value = "raid"; AppShell.handleViewChange(); } },
+          { label: "Go to Portfolio View", subtitle: "Switch view mode", action: () => { el.viewSelect.value = "portfolio"; AppShell.handleViewChange(); } },
+          { label: "Toggle Theme", subtitle: "Switch dark/light mode", action: () => AppShell.toggleTheme() },
+          { label: "Jira Integration", subtitle: "Configure integrations", action: () => showIntegrationsDialog() },
+          { label: "Set Baseline", subtitle: "Save project baseline", action: () => AppShell.setBaseline() },
+          { label: "Add Sprint", subtitle: "Create new project sprint", action: () => AppShell.addSprint() }
+        ];
+
+        state.tasks.forEach(t => {
+          items.push({
+            label: `${t.wbs_code} ${t.title}`,
+            subtitle: `Task - Status: ${t.status}`,
+            badge: "Task",
+            action: () => {
+              const row = el.grid.querySelector(`tr[data-task-id="${t.id}"]`);
+              if (row) {
+                row.scrollIntoView({ block: "center", behavior: "smooth" });
+                row.style.outline = "2px solid var(--neon-cyan)";
+                setTimeout(() => row.style.outline = "none", 1500);
+              }
+              DetailsDrawer.open(t.id);
+            }
+          });
+        });
+
+        return items;
+      },
+      renderResults() {
+        const query = el.commandInput.value.toLowerCase().trim();
+        const all = this.getItems();
+        
+        if (!query) {
+          this.filteredItems = all.slice(0, 8);
+        } else {
+          this.filteredItems = all.filter(item => 
+            item.label.toLowerCase().includes(query) || 
+            item.subtitle.toLowerCase().includes(query)
+          ).slice(0, 10);
+        }
+
+        this.activeIdx = this.filteredItems.length > 0 ? 0 : -1;
+        el.commandResults.replaceChildren();
+
+        this.filteredItems.forEach((item, idx) => {
+          const div = document.createElement("div");
+          div.className = "command-item" + (idx === this.activeIdx ? " active" : "");
+          
+          const textWrap = document.createElement("div");
+          textWrap.style.display = "flex";
+          textWrap.style.alignItems = "baseline";
+
+          const titleSpan = document.createElement("span");
+          titleSpan.className = "command-item-label";
+          titleSpan.textContent = item.label;
+          textWrap.appendChild(titleSpan);
+
+          const subtitleSpan = document.createElement("span");
+          subtitleSpan.className = "command-item-subtitle";
+          subtitleSpan.textContent = item.subtitle;
+          textWrap.appendChild(subtitleSpan);
+
+          div.appendChild(textWrap);
+
+          if (item.badge) {
+            const badge = document.createElement("span");
+            badge.className = "command-item-badge";
+            badge.textContent = item.badge;
+            div.appendChild(badge);
+          }
+
+          div.addEventListener("click", () => {
+            this.close();
+            item.action();
+          });
+
+          el.commandResults.appendChild(div);
+        });
+      },
+      handleKeyDown(e) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          this.close();
+        } else if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (this.filteredItems.length === 0) return;
+          this.activeIdx = (this.activeIdx + 1) % this.filteredItems.length;
+          this.updateActiveItemHighlight();
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          if (this.filteredItems.length === 0) return;
+          this.activeIdx = (this.activeIdx - 1 + this.filteredItems.length) % this.filteredItems.length;
+          this.updateActiveItemHighlight();
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          if (this.activeIdx >= 0 && this.filteredItems[this.activeIdx]) {
+            const item = this.filteredItems[this.activeIdx];
+            this.close();
+            item.action();
+          }
+        }
+      },
+      updateActiveItemHighlight() {
+        const childNodes = el.commandResults.childNodes;
+        childNodes.forEach((node, idx) => {
+          if (idx === this.activeIdx) {
+            node.classList.add("active");
+            node.scrollIntoView({ block: "nearest" });
+          } else {
+            node.classList.remove("active");
+          }
+        });
+      }
+    };
+
     const ViewSystem = {
       apply(tasks) {
         const filtered = this.filterTasks(tasks);
@@ -3841,7 +5449,15 @@
         const filter = state.view.filter || "all";
         const currentSprint = this.currentSprint();
         const today = todayIso();
+        const search = (state.searchTerm || "").toLowerCase().trim();
         return tasks.filter(task => {
+          if (search) {
+            const nameMatch = (task.title || "").toLowerCase().includes(search);
+            const wbsMatch = (task.wbs_code || "").toLowerCase().includes(search);
+            const resMatch = (task.resource || "").toLowerCase().includes(search);
+            const tagMatch = (task.tags || "").toLowerCase().includes(search);
+            if (!nameMatch && !wbsMatch && !resMatch && !tagMatch) return false;
+          }
           if (filter === "slipped") return task.slippage_status === "slipped";
           if (filter === "at-risk") return task.slippage_status === "at-risk";
           if (filter === "milestones") return Boolean(task.is_milestone);
@@ -3886,9 +5502,57 @@
         el.viewSelect.value = state.view.mode;
         el.filterSelect.value = state.view.filter;
         el.groupSelect.value = state.view.group;
-        el.mainLayout.classList.remove("view-grid", "view-gantt", "view-board", "view-sprint", "view-dashboard", "view-workload", "view-raid");
+        el.mainLayout.classList.remove("view-grid", "view-gantt", "view-board", "view-sprint", "view-dashboard", "view-workload", "view-raid", "view-portfolio");
         if (state.view.mode !== "split") el.mainLayout.classList.add(`view-${state.view.mode}`);
         this.updateSavedViewOptions();
+
+        const isPort = state.view.mode === "portfolio";
+        el.filterSelect.disabled = isPort;
+        el.groupSelect.disabled = isPort;
+        el.savedViewSelect.disabled = isPort;
+        el.newTask.disabled = isPort;
+        el.template.disabled = isPort;
+        el.importBtn.disabled = isPort;
+        el.searchInput.disabled = isPort;
+        this.updateMenuOptions();
+      },
+      updateMenuOptions() {
+        const mode = state.view.mode;
+        const isPort = mode === "portfolio";
+        el.toolsMenuBtn.disabled = isPort;
+        el.exportMenuBtn.disabled = isPort;
+
+        if (isPort) return;
+
+        // Update Tools Menu options
+        // Most items are visible in all views; only hide Gantt-specific items when not in Gantt/Split
+        const toolButtons = el.toolsMenu.querySelectorAll("[data-tool]");
+        for (const btn of toolButtons) {
+          const tool = btn.dataset.tool;
+          let visible = true;
+
+          // Only hide these specific items in views where they truly don't apply
+          if (tool === "gantt-labels" && mode !== "split" && mode !== "gantt") visible = false;
+          else if (tool === "gantt-lines" && mode !== "split" && mode !== "gantt") visible = false;
+          else if (tool === "choose-columns" && mode !== "split" && mode !== "sprint" && mode !== "grid") visible = false;
+
+          // All other items are always visible regardless of view mode
+          btn.style.display = visible ? "block" : "none";
+        }
+
+        // Update Export Menu options
+        const exportButtons = el.exportMenu.querySelectorAll("[data-export]");
+        for (const btn of exportButtons) {
+          const exp = btn.dataset.export;
+          let visible = true;
+          if (exp === "gif") visible = (mode === "split" || mode === "gantt");
+          else if (exp === "csv" || exp === "excel") visible = (mode !== "portfolio");
+          else if (exp === "jira-csv") visible = (mode !== "portfolio");
+          else if (exp === "project-xml") visible = (mode !== "portfolio");
+          else if (exp === "sql") visible = (mode !== "portfolio");
+
+          btn.style.display = visible ? "block" : "none";
+        }
       },
       updateSavedViewOptions() {
         const current = el.savedViewSelect.value;
@@ -4156,6 +5820,7 @@
     const AppShell = {
       async init() {
         try {
+          state.activeProject = localStorage.getItem("novaplan_active_project") || "Default Project";
           state.storage = await StorageEngine.init();
           const modeIcon = { OPFS: "💾", IndexedDB: "🗄️", localStorage: "⚠️", "In-Memory": "🔴" };
           el.status.textContent = `${modeIcon[state.storage.mode] ?? "🔴"} ${state.storage.mode}`;
@@ -4163,6 +5828,7 @@
             el.warning.textContent = state.storage.persistWarning;
             el.warning.classList.add("show");
           }
+          await updateProjectSelectOptions();
           this.attachEvents();
           await this.refresh();
           setControlsEnabled(true);
@@ -4177,6 +5843,21 @@
       attachEvents() {
         el.grid.addEventListener("click", event => DataGrid.handleClick(event));
         el.grid.addEventListener("change", event => DataGrid.handleChange(event));
+        el.grid.addEventListener("contextmenu", event => {
+          const row = event.target.closest("tr");
+          if (!row || !row.dataset.taskId) return;
+          event.preventDefault();
+          const taskId = Number(row.dataset.taskId);
+          ContextMenu.show(taskId, event.clientX, event.clientY);
+        });
+        document.addEventListener("mousedown", event => {
+          if (el.contextMenu && !el.contextMenu.contains(event.target)) {
+            el.contextMenu.style.display = "none";
+          }
+        });
+        document.addEventListener("mousedown", event => DataGrid.handleColumnMouseDown(event), true);
+        document.addEventListener("mousemove", event => DataGrid.handleColumnMouseMove(event), true);
+        document.addEventListener("mouseup", event => DataGrid.handleColumnMouseUp(event), true);
         el.newTask.addEventListener("click", () => this.addRootTask());
         el.bulkDelete.addEventListener("click", () => this.bulkDelete());
         el.template.addEventListener("change", () => this.handleTemplateSelect());
@@ -4191,6 +5872,26 @@
         el.filterSelect.addEventListener("change", () => this.handleViewChange());
         el.groupSelect.addEventListener("change", () => this.handleViewChange());
         el.savedViewSelect.addEventListener("change", () => this.handleSavedViewSelect());
+        el.projectSelect.addEventListener("change", async () => {
+          const val = el.projectSelect.value;
+          if (val === "__new__") {
+            el.projectSelect.value = state.activeProject;
+            await createProjectPrompt();
+          } else if (val === "__portfolio__") {
+            el.projectSelect.value = state.activeProject;
+            state.view.mode = "portfolio";
+            el.viewSelect.value = "portfolio";
+            await this.handleViewChange();
+          } else {
+            await switchProject(val);
+          }
+        });
+        el.searchInput.addEventListener("input", () => {
+          state.searchTerm = el.searchInput.value;
+          state.visibleTasks = ViewSystem.apply(state.tasks);
+          DataGrid.render(state.visibleTasks);
+          GanttChart.render(state.visibleTasks);
+        });
         el.board.addEventListener("dragstart", event => {
           const card = event.target.closest(".board-card");
           if (card) event.dataTransfer.setData("text/plain", card.dataset.taskId);
@@ -4206,11 +5907,42 @@
         el.ganttBody.addEventListener("scroll", () => {
           el.ganttHeader.scrollLeft = el.ganttBody.scrollLeft;
         });
+        el.ganttBody.addEventListener("mousedown", event => {
+          const bar = event.target.closest(".gantt-bar");
+          if (!bar) return;
+          const task = findTask(Number(bar.dataset.taskId));
+          if (!task || task.is_summary) return;
+          event.preventDefault();
+          GanttChart.startDrag(event, bar, task);
+        });
         el.ganttBody.addEventListener("mousemove", event => {
           const bar = event.target.closest(".gantt-bar");
           if (!bar) return;
           const task = findTask(Number(bar.dataset.taskId));
-          if (task) GanttChart.tooltip(task, event);
+          if (task) {
+            GanttChart.tooltip(task, event);
+            if (task.is_summary || task.is_milestone) {
+              bar.style.cursor = "move";
+            } else {
+              const rect = bar.getBoundingClientRect();
+              const clickX = event.clientX - rect.left;
+              if (clickX < 8 || rect.width - clickX < 8) {
+                bar.style.cursor = "col-resize";
+              } else {
+                bar.style.cursor = "move";
+              }
+            }
+          }
+        });
+        el.ganttBody.addEventListener("click", event => {
+          if (GanttChart.wasDragged) {
+            GanttChart.wasDragged = false;
+            return;
+          }
+          const bar = event.target.closest(".gantt-bar");
+          if (!bar) return;
+          const task = findTask(Number(bar.dataset.taskId));
+          if (task) GanttChart.editTimelineText(task);
         });
         el.ganttBody.addEventListener("mouseleave", () => {
           el.tooltip.style.display = "none";
@@ -4220,9 +5952,38 @@
         el.collapseAll.addEventListener("click", () => this.collapseAll());
         el.expandAll.addEventListener("click", () => this.expandAll());
         el.themeToggle.addEventListener("click", () => this.toggleTheme());
+
+        // Details drawer & double-click listener
+        el.grid.addEventListener("dblclick", event => {
+          const row = event.target.closest("tr[data-task-id]");
+          if (!row) return;
+          const taskId = Number(row.dataset.taskId);
+          DetailsDrawer.open(taskId);
+        });
+        el.detailsCloseBtn.addEventListener("click", () => DetailsDrawer.close());
+
+        // Command Palette global listeners
+        window.addEventListener("keydown", event => {
+          if ((event.ctrlKey || event.metaKey) && event.key === "k") {
+            event.preventDefault();
+            if (el.commandPalette.classList.contains("show")) {
+              CommandPalette.close();
+            } else {
+              CommandPalette.show();
+            }
+          }
+        });
+        el.commandPalette.addEventListener("mousedown", event => {
+          if (event.target === el.commandPalette) {
+            CommandPalette.close();
+          }
+        });
+        el.commandInput.addEventListener("input", () => CommandPalette.renderResults());
+        el.commandInput.addEventListener("keydown", event => CommandPalette.handleKeyDown(event));
       },
       async refresh() {
         state.settings = await state.storage.loadSettings();
+        state.customColumns = state.settings.customColumns || [];
         state.sprints = await state.storage.loadSprints();
         state.savedViews = await state.storage.loadSavedViews();
         state.scenarios = await state.storage.loadScenarios();
@@ -4238,6 +5999,7 @@
         if (state.view.mode === "dashboard") DashboardView.render(state.visibleTasks);
         else if (state.view.mode === "workload") WorkloadView.render(state.visibleTasks);
         else if (state.view.mode === "raid") RaidView.render();
+        else if (state.view.mode === "portfolio") PortfolioView.render();
         else BoardView.render(state.visibleTasks);
         updateBulkDeleteState();
       },
@@ -4460,6 +6222,8 @@
         closeToolsMenu();
         const kind = button.dataset.tool;
         if (kind === "calendar") await this.editCalendarSettings();
+        if (kind === "gantt-labels") await this.editGanttLabelSettings();
+        if (kind === "gantt-lines") await this.editGanttLines();
         if (kind === "choose-columns") await this.chooseColumns();
         if (kind === "set-baseline") await this.setBaseline();
         if (kind === "view-baseline") await this.viewBaseline();
@@ -4470,29 +6234,143 @@
         if (kind === "compare-scenario") await this.compareScenario();
         if (kind === "add-raid") await this.addRaidItem();
         if (kind === "log-change") await this.logChange();
+        if (kind === "integrations") await showIntegrationsDialog();
+        if (kind === "custom-fields") await showCustomFieldsDialog();
+        if (kind === "conditional-formatting") await this.manageConditionalFormatting();
         if (kind === "reset-db") await this.resetDatabase();
+      },
+      async manageConditionalFormatting() {
+        const rules = getConditionalRules();
+        const fields = [];
+        for (const rule of rules) {
+          fields.push({
+            name: `${rule.id}_enabled`,
+            label: `${rule.label} (Enable)`,
+            type: "select",
+            value: rule.enabled ? "true" : "false",
+            options: [
+              { value: "true", label: "Enabled" },
+              { value: "false", label: "Disabled" }
+            ]
+          });
+          fields.push({
+            name: `${rule.id}_color`,
+            label: `Background Color`,
+            type: "color",
+            value: rule.color
+          });
+          fields.push({
+            name: `${rule.id}_textColor`,
+            label: `Text Color`,
+            type: "color",
+            value: rule.textColor
+          });
+        }
+
+        const res = await showFormDialog({
+          title: "Conditional Formatting Rules",
+          fields: fields
+        });
+
+        if (res) {
+          const updatedRules = rules.map(rule => {
+            return {
+              ...rule,
+              enabled: res[`${rule.id}_enabled`] === "true",
+              color: res[`${rule.id}_color`],
+              textColor: res[`${rule.id}_textColor`]
+            };
+          });
+          state.settings.conditionalRules = updatedRules;
+          await state.storage.saveSetting("conditionalRules", updatedRules);
+          await AppShell.refresh();
+          showToast("Conditional formatting rules saved", "success");
+        }
       },
       async editCalendarSettings() {
         const current = state.settings.calendar || DEFAULT_CALENDAR;
-        const hoursText = window.prompt("Hours per working day", String(current.hoursPerDay || HOURS_PER_DAY));
-        if (hoursText == null) return;
-        const hoursPerDay = Number(hoursText);
-        if (!Number.isFinite(hoursPerDay) || hoursPerDay <= 0 || hoursPerDay > 24) return showToast("Working hours must be between 0 and 24", "error");
-        const daysText = window.prompt("Working days as numbers, 0=Sun through 6=Sat", (current.workingDays || DEFAULT_CALENDAR.workingDays).join(","));
-        if (daysText == null) return;
-        const workingDays = splitCsv(daysText).map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6);
-        if (!workingDays.length) return showToast("At least one working day is required", "error");
-        const holidayText = window.prompt("Holiday dates, comma separated YYYY-MM-DD", (current.holidays || []).join(","));
-        if (holidayText == null) return;
-        const holidays = splitCsv(holidayText);
-        if (holidays.some(date => !isValidIsoDate(date))) return showToast("Holiday dates must use YYYY-MM-DD", "error");
+        const res = await showFormDialog({
+          title: "Calendar Settings",
+          fields: [
+            { name: "hoursPerDay", label: "Hours per working day", type: "number", min: 0.1, max: 24, value: current.hoursPerDay || HOURS_PER_DAY },
+            { name: "workingDays", label: "Working days", type: "checkbox-group", value: current.workingDays || DEFAULT_CALENDAR.workingDays, options: [
+                { value: 0, label: "Sunday" },
+                { value: 1, label: "Monday" },
+                { value: 2, label: "Tuesday" },
+                { value: 3, label: "Wednesday" },
+                { value: 4, label: "Thursday" },
+                { value: 5, label: "Friday" },
+                { value: 6, label: "Saturday" }
+            ]},
+            { name: "holidays", label: "Holidays (comma-separated YYYY-MM-DD)", type: "text", value: (current.holidays || []).join(", "), placeholder: "e.g. 2026-01-01, 2026-12-25" }
+          ],
+          onSubmit: (res) => {
+            const hours = Number(res.hoursPerDay);
+            if (!Number.isFinite(hours) || hours <= 0 || hours > 24) {
+              return "Working hours must be between 0 and 24";
+            }
+            if (!res.workingDays.length) {
+              return "At least one working day is required";
+            }
+            const holidays = splitCsv(res.holidays);
+            if (holidays.some(date => !isValidIsoDate(date))) {
+              return "Holiday dates must use YYYY-MM-DD";
+            }
+          }
+        });
+        if (res == null) return;
+        const hoursPerDay = Number(res.hoursPerDay);
+        const workingDays = res.workingDays.map(Number);
+        const holidays = splitCsv(res.holidays);
         await state.storage.saveSetting("calendar", { ...current, hoursPerDay, workingDays: [...new Set(workingDays)].sort(), holidays });
         await this.refresh();
         showToast("Calendar settings saved", "success");
       },
+      async editGanttLabelSettings() {
+        const current = { ...DEFAULT_GANTT_LABELS, ...(state.settings.ganttLabels || {}) };
+        const res = await showFormDialog({
+          title: "Gantt Label Settings",
+          fields: [
+            { name: "source", label: "Gantt label source", type: "select", value: current.source, options: [
+                { value: "task", label: "Task (shows task details)" },
+                { value: "custom", label: "Custom (shows custom text)" }
+            ]},
+            { name: "position", label: "Gantt label position", type: "select", value: current.position, options: [
+                { value: "inside", label: "Inside" },
+                { value: "middle", label: "Middle" },
+                { value: "above", label: "Above" },
+                { value: "below", label: "Below" }
+            ]}
+          ],
+          onSubmit: (res) => {
+            if (!["task", "custom"].includes(res.source)) {
+              return "Gantt label source must be task or custom";
+            }
+            if (!GANTT_LABEL_POSITIONS.includes(res.position)) {
+              return "Gantt label position must be inside, middle, above, or below";
+            }
+          }
+        });
+        if (res == null) return;
+        const safeSource = res.source;
+        const safePosition = res.position;
+        await state.storage.saveSetting("ganttLabels", { source: safeSource, position: safePosition });
+        await this.refresh();
+        showToast("Gantt label settings saved", "success");
+      },
+      async editGanttLines() {
+        const nextLines = await showGanttLinesDialog({
+          lines: sanitizeGanttLines(state.settings.ganttLines),
+          tasks: state.tasks
+        });
+        if (nextLines == null) return;
+        await state.storage.saveSetting("ganttLines", sanitizeGanttLines(nextLines));
+        await this.refresh();
+        showToast("Gantt lines saved", "success");
+      },
       async chooseColumns() {
         const nextHidden = await showColumnChooser({
-          columns: DataGrid.columns,
+          columns: DataGrid.orderedColumns(),
           alwaysVisible: DataGrid.alwaysVisible,
           hidden: Array.isArray(state.settings.hiddenColumns) ? state.settings.hiddenColumns : []
         });
@@ -4503,9 +6381,18 @@
         showToast(`Columns updated — ${shown} of ${DataGrid.columns.length - DataGrid.alwaysVisible.length} optional columns shown`, "success");
       },
       async setBaseline() {
-        const name = window.prompt("Baseline name", `Baseline ${new Date().toLocaleDateString()}`);
-        if (name == null) return;
-        await state.storage.setBaseline(name.trim() || "Baseline");
+        const defaultName = `Baseline ${new Date().toLocaleDateString()}`;
+        const res = await showFormDialog({
+          title: "Set Baseline",
+          fields: [
+            { name: "name", label: "Baseline name", type: "text", value: defaultName }
+          ],
+          onSubmit: (res) => {
+            if (!res.name.trim()) return "Baseline name is required";
+          }
+        });
+        if (res == null) return;
+        await state.storage.setBaseline(res.name.trim() || "Baseline");
         await this.refresh();
         showToast("Baseline captured", "success");
       },
@@ -4537,36 +6424,75 @@
         showToast("Active baseline cleared", "success");
       },
       async addSprint() {
-        const name = window.prompt("Sprint name", `Sprint ${state.sprints.length + 1}`);
-        if (name == null || !name.trim()) return;
-        const start = window.prompt("Sprint start date (YYYY-MM-DD)", todayIso());
-        if (start == null) return;
-        const end = window.prompt("Sprint end date (YYYY-MM-DD)", isValidIsoDate(start) ? addDays(start, 13) : todayIso());
-        if (end == null) return;
-        if (!isValidIsoDate(start) || !isValidIsoDate(end) || end < start) return showToast("Sprint dates must be valid and ordered", "error");
-        await state.storage.addSprint({ name: name.trim().slice(0, 80), start_date: start, end_date: end });
+        const defaultName = `Sprint ${state.sprints.length + 1}`;
+        const defaultStart = todayIso();
+        const defaultEnd = isValidIsoDate(defaultStart) ? addDays(defaultStart, 13) : todayIso();
+
+        const res = await showFormDialog({
+          title: "Add Sprint",
+          fields: [
+            { name: "name", label: "Sprint name", type: "text", value: defaultName },
+            { name: "start", label: "Sprint start date (YYYY-MM-DD)", type: "date", value: defaultStart },
+            { name: "end", label: "Sprint end date (YYYY-MM-DD)", type: "date", value: defaultEnd }
+          ],
+          onSubmit: (res) => {
+            if (!res.name.trim()) return "Sprint name is required";
+            if (!isValidIsoDate(res.start) || !isValidIsoDate(res.end) || res.end < res.start) {
+              return "Sprint dates must be valid and ordered";
+            }
+          }
+        });
+        if (res == null) return;
+        await state.storage.addSprint({ name: res.name.trim().slice(0, 80), start_date: res.start, end_date: res.end });
         await this.refresh();
         showToast("Sprint added", "success");
       },
       async saveView() {
-        const name = window.prompt("Saved view name", `${state.view.mode} view`);
-        if (name == null || !name.trim()) return;
-        await state.storage.saveCurrentView(name.trim().slice(0, 80), { ...state.view });
+        const defaultName = `${state.view.mode} view`;
+        const res = await showFormDialog({
+          title: "Save View",
+          fields: [
+            { name: "name", label: "Saved view name", type: "text", value: defaultName }
+          ],
+          onSubmit: (res) => {
+            if (!res.name.trim()) return "Saved view name is required";
+          }
+        });
+        if (res == null) return;
+        await state.storage.saveCurrentView(res.name.trim().slice(0, 80), { ...state.view });
         await this.refresh();
         showToast("View saved", "success");
       },
       async saveScenario() {
-        const name = window.prompt("Scenario name", `Scenario ${state.scenarios.length + 1}`);
-        if (name == null || !name.trim()) return;
-        await state.storage.saveScenario(name.trim().slice(0, 80));
+        const defaultName = `Scenario ${state.scenarios.length + 1}`;
+        const res = await showFormDialog({
+          title: "Save Scenario",
+          fields: [
+            { name: "name", label: "Scenario name", type: "text", value: defaultName }
+          ],
+          onSubmit: (res) => {
+            if (!res.name.trim()) return "Scenario name is required";
+          }
+        });
+        if (res == null) return;
+        await state.storage.saveScenario(res.name.trim().slice(0, 80));
         await this.refresh();
         showToast("Scenario saved", "success");
       },
       async compareScenario() {
         if (!state.scenarios.length) return showToast("No scenarios saved yet", "warning");
-        const list = state.scenarios.map((scenario, index) => `${index + 1}. ${scenario.name}`).join("\n");
-        const choice = window.prompt(`Compare against which scenario?\n${list}`, "1");
-        if (choice == null) return;
+        const scenarioOptions = state.scenarios.map((scenario, index) => ({
+          value: String(index + 1),
+          label: `${index + 1}. ${scenario.name}`
+        }));
+        const res = await showFormDialog({
+          title: "Compare Scenario",
+          fields: [
+            { name: "choice", label: "Compare against which scenario?", type: "select", value: "1", options: scenarioOptions }
+          ]
+        });
+        if (res == null) return;
+        const choice = res.choice;
         const scenario = state.scenarios[Number(choice) - 1] || state.scenarios.find(item => item.name.toLowerCase() === choice.toLowerCase());
         if (!scenario) return showToast("Scenario not found", "error");
         const byId = new Map(scenario.snapshot.map(task => [Number(task.id), task]));
@@ -4583,39 +6509,71 @@
         });
       },
       async addRaidItem() {
-        const type = window.prompt("RAID type: Risk, Assumption, Issue, Dependency, Decision", "Risk");
-        if (type == null) return;
-        const safeType = ["Risk", "Assumption", "Issue", "Dependency", "Decision"].find(item => item.toLowerCase() === type.trim().toLowerCase()) || "Risk";
-        const title = window.prompt("RAID title", "");
-        if (title == null || !title.trim()) return;
-        const owner = window.prompt("Owner", "");
-        if (owner == null) return;
-        const due = window.prompt("Due date YYYY-MM-DD, optional", "");
-        if (due == null) return;
-        if (due && !isValidIsoDate(due)) return showToast("Due date must use YYYY-MM-DD", "error");
-        const linked = window.prompt("Linked task WBS, optional", "");
-        if (linked == null) return;
-        const task = linked ? state.tasks.find(item => item.wbs_code === linked.trim()) : null;
-        if (linked && !task) return showToast("Linked task WBS not found", "error");
-        const notes = window.prompt("Notes", "");
-        if (notes == null) return;
-        await state.storage.addRaidItem({ type: safeType, title: title.trim().slice(0, 160), status: "Open", owner, due_date: due, linked_task_id: task?.id || null, notes });
+        const res = await showFormDialog({
+          title: "Add RAID Item",
+          fields: [
+            { name: "type", label: "RAID Type", type: "select", value: "Risk", options: [
+                { value: "Risk", label: "Risk" },
+                { value: "Assumption", label: "Assumption" },
+                { value: "Issue", label: "Issue" },
+                { value: "Dependency", label: "Dependency" },
+                { value: "Decision", label: "Decision" }
+            ]},
+            { name: "title", label: "RAID Title", type: "text", value: "" },
+            { name: "owner", label: "Owner", type: "text", value: "" },
+            { name: "due", label: "Due Date (optional)", type: "date", value: "" },
+            { name: "linked", label: "Linked Task WBS (optional)", type: "text", value: "" },
+            { name: "notes", label: "Notes", type: "textarea", value: "" }
+          ],
+          onSubmit: (res) => {
+            if (!res.title.trim()) return "RAID title is required";
+            if (res.due && !isValidIsoDate(res.due)) return "Due date must use YYYY-MM-DD";
+            if (res.linked.trim()) {
+              const task = state.tasks.find(item => item.wbs_code === res.linked.trim());
+              if (!task) return "Linked task WBS not found";
+            }
+          }
+        });
+        if (res == null) return;
+        const safeType = res.type;
+        const title = res.title.trim().slice(0, 160);
+        const owner = res.owner.trim();
+        const due = res.due || "";
+        const linked = res.linked.trim();
+        const task = linked ? state.tasks.find(item => item.wbs_code === linked) : null;
+        const notes = res.notes.trim();
+
+        await state.storage.addRaidItem({ type: safeType, title, status: "Open", owner, due_date: due, linked_task_id: task?.id || null, notes });
         state.view.mode = "raid";
         await this.refresh();
         showToast("RAID item added", "success");
       },
       async logChange() {
-        const change_type = window.prompt("Change type", "Scope");
-        if (change_type == null || !change_type.trim()) return;
-        const summary = window.prompt("Change summary", "");
-        if (summary == null || !summary.trim()) return;
-        const linked = window.prompt("Linked task WBS, optional", "");
-        if (linked == null) return;
-        const task = linked ? state.tasks.find(item => item.wbs_code === linked.trim()) : null;
-        if (linked && !task) return showToast("Linked task WBS not found", "error");
-        const notes = window.prompt("Notes", "");
-        if (notes == null) return;
-        await state.storage.addChangeLog({ change_type: change_type.trim().slice(0, 60), summary: summary.trim().slice(0, 200), linked_task_id: task?.id || null, notes });
+        const res = await showFormDialog({
+          title: "Log Change",
+          fields: [
+            { name: "change_type", label: "Change Type", type: "text", value: "Scope", placeholder: "e.g. Scope, Schedule, Budget" },
+            { name: "summary", label: "Change Summary", type: "text", value: "" },
+            { name: "linked", label: "Linked Task WBS (optional)", type: "text", value: "" },
+            { name: "notes", label: "Notes", type: "textarea", value: "" }
+          ],
+          onSubmit: (res) => {
+            if (!res.change_type.trim()) return "Change type is required";
+            if (!res.summary.trim()) return "Change summary is required";
+            if (res.linked.trim()) {
+              const task = state.tasks.find(item => item.wbs_code === res.linked.trim());
+              if (!task) return "Linked task WBS not found";
+            }
+          }
+        });
+        if (res == null) return;
+        const change_type = res.change_type.trim().slice(0, 60);
+        const summary = res.summary.trim().slice(0, 200);
+        const linked = res.linked.trim();
+        const task = linked ? state.tasks.find(item => item.wbs_code === linked) : null;
+        const notes = res.notes.trim();
+
+        await state.storage.addChangeLog({ change_type, summary, linked_task_id: task?.id || null, notes });
         state.view.mode = "raid";
         await this.refresh();
         showToast("Change logged", "success");
@@ -4791,6 +6749,515 @@
       });
     }
 
+    function showFormDialog({ title, fields, onSubmit }) {
+      return new Promise(resolve => {
+        el.modal.replaceChildren();
+        const box = document.createElement("div");
+        box.className = "modal-box";
+        box.setAttribute("role", "dialog");
+        box.setAttribute("aria-modal", "true");
+        box.setAttribute("aria-labelledby", "modal-title");
+
+        const head = document.createElement("div");
+        head.className = "modal-head";
+        const h = document.createElement("h2");
+        h.id = "modal-title";
+        h.className = "font-semibold";
+        h.textContent = title;
+        head.appendChild(h);
+
+        const content = document.createElement("div");
+        content.className = "modal-body";
+        content.style.cssText = "display:grid;gap:14px";
+
+        const inputs = {};
+
+        fields.forEach(field => {
+          const wrapper = document.createElement("div");
+          wrapper.style.cssText = "display:flex;flex-direction:column;gap:6px";
+
+          const label = document.createElement("label");
+          label.style.cssText = "color:var(--text-primary);font-size:13px;font-weight:600";
+          label.textContent = field.label;
+          wrapper.appendChild(label);
+
+          if (field.type === "select") {
+            const select = document.createElement("select");
+            select.style.cssText = "width:100%;height:34px;border-radius:6px;padding:0 8px;background:var(--bg-elevated);color:var(--text-primary);border:1px solid var(--border)";
+            field.options.forEach(opt => {
+              const o = document.createElement("option");
+              o.value = opt.value;
+              o.textContent = opt.label;
+              select.appendChild(o);
+            });
+            select.value = field.value || "";
+            inputs[field.name] = select;
+            wrapper.appendChild(select);
+          } else if (field.type === "textarea") {
+            const textarea = document.createElement("textarea");
+            textarea.rows = field.rows || 3;
+            textarea.style.cssText = "width:100%;border-radius:6px;padding:8px 10px;background:var(--bg-elevated);color:var(--text-primary);border:1px solid var(--border);resize:vertical";
+            textarea.value = field.value || "";
+            if (field.placeholder) textarea.placeholder = field.placeholder;
+            inputs[field.name] = textarea;
+            wrapper.appendChild(textarea);
+          } else if (field.type === "checkbox-group") {
+            const groupWrap = document.createElement("div");
+            groupWrap.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill, minmax(100px, 1fr));gap:8px;margin-top:4px";
+            const checkedValues = new Set((field.value || []).map(String));
+            const checks = [];
+            field.options.forEach(opt => {
+              const lbl = document.createElement("label");
+              lbl.style.cssText = "display:flex;align-items:center;gap:6px;font-size:13px;font-weight:normal;color:var(--text-muted);cursor:pointer";
+              const chk = document.createElement("input");
+              chk.type = "checkbox";
+              chk.value = opt.value;
+              chk.checked = checkedValues.has(String(opt.value));
+              lbl.append(chk, document.createTextNode(opt.label));
+              groupWrap.appendChild(lbl);
+              checks.push({ chk, value: opt.value });
+            });
+            inputs[field.name] = {
+              get value() {
+                return checks.filter(c => c.chk.checked).map(c => c.value);
+              }
+            };
+            wrapper.appendChild(groupWrap);
+          } else {
+            const input = document.createElement("input");
+            input.type = field.type || "text";
+            input.style.cssText = "width:100%;height:34px;border-radius:6px;padding:0 10px;background:var(--bg-elevated);color:var(--text-primary);border:1px solid var(--border)";
+            input.value = field.value !== undefined ? field.value : "";
+            if (field.placeholder) input.placeholder = field.placeholder;
+            if (field.min !== undefined) input.min = field.min;
+            if (field.max !== undefined) input.max = field.max;
+            inputs[field.name] = input;
+            wrapper.appendChild(input);
+          }
+
+          content.appendChild(wrapper);
+        });
+
+        const foot = document.createElement("div");
+        foot.className = "modal-foot";
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.textContent = "Cancel";
+        cancel.addEventListener("click", () => close(null));
+        const submit = document.createElement("button");
+        submit.type = "button";
+        submit.className = "primary";
+        submit.textContent = "OK";
+
+        const doSubmit = () => {
+          const res = {};
+          for (const key in inputs) {
+            res[key] = inputs[key].value;
+          }
+          if (onSubmit) {
+            const error = onSubmit(res);
+            if (error) {
+              showToast(error, "error");
+              return;
+            }
+          }
+          close(res);
+        };
+
+        submit.addEventListener("click", doSubmit);
+        foot.append(cancel, submit);
+
+        box.append(head, content, foot);
+        el.modal.appendChild(box);
+        el.modal.classList.add("show");
+        el.modal.setAttribute("aria-hidden", "false");
+
+        const focusables = () => [...box.querySelectorAll("input,select,textarea,button")];
+        const close = value => {
+          el.modal.classList.remove("show");
+          el.modal.setAttribute("aria-hidden", "true");
+          el.modal.replaceChildren();
+          document.removeEventListener("keydown", trap);
+          resolve(value);
+        };
+        const trap = event => {
+          if (event.key === "Escape") close(null);
+          if (event.key === "Enter" && !["textarea", "button"].includes(document.activeElement.tagName.toLowerCase())) {
+            event.preventDefault();
+            doSubmit();
+          }
+          if (event.key !== "Tab") return;
+          const nodes = focusables();
+          const first = nodes[0];
+          const last = nodes.at(-1);
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        };
+        document.addEventListener("keydown", trap);
+        setTimeout(() => {
+          const firstInput = box.querySelector("input,select,textarea");
+          if (firstInput) firstInput.focus();
+          else focusables().at(-1)?.focus();
+        }, 0);
+      });
+    }
+
+    function showGanttTimelineTextDialog(task) {
+      return new Promise(resolve => {
+        el.modal.replaceChildren();
+        const box = document.createElement("div");
+        box.className = "modal-box";
+        box.setAttribute("role", "dialog");
+        box.setAttribute("aria-modal", "true");
+        box.setAttribute("aria-labelledby", "modal-title");
+
+        const head = document.createElement("div");
+        head.className = "modal-head";
+        const h = document.createElement("h2");
+        h.id = "modal-title";
+        h.className = "font-semibold";
+        h.textContent = "Gantt Timeline Text";
+        head.appendChild(h);
+
+        const content = document.createElement("div");
+        content.className = "modal-body";
+        const summary = document.createElement("div");
+        summary.style.cssText = "margin-bottom:12px;color:var(--text-muted)";
+        summary.textContent = `${task.wbs_code} ${task.title}`;
+
+        const textLabel = document.createElement("label");
+        textLabel.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600;margin-bottom:6px";
+        textLabel.textContent = "Timeline text";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = task.gantt_label || "";
+        input.maxLength = 120;
+        input.placeholder = "Custom text shown on this Gantt bar";
+        input.style.cssText = "width:100%;height:34px;border-radius:6px;padding:0 10px;margin-bottom:14px";
+        textLabel.appendChild(input);
+
+        const posLabel = document.createElement("div");
+        posLabel.style.cssText = "color:var(--text-primary);font-size:13px;font-weight:600;margin-bottom:6px";
+        posLabel.textContent = "Position";
+        const positionWrap = document.createElement("div");
+        positionWrap.style.cssText = "display:flex;gap:8px";
+        let position = ["above", "below", "middle"].includes(task.gantt_label_position) ? task.gantt_label_position : "above";
+        const makePositionButton = value => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = value[0].toUpperCase() + value.slice(1);
+          btn.setAttribute("aria-pressed", String(position === value));
+          if (position === value) btn.className = "primary";
+          btn.addEventListener("click", () => {
+            position = value;
+            for (const item of positionWrap.querySelectorAll("button")) {
+              const active = item.dataset.position === position;
+              item.className = active ? "primary" : "";
+              item.setAttribute("aria-pressed", String(active));
+            }
+          });
+          btn.dataset.position = value;
+          return btn;
+        };
+        positionWrap.append(makePositionButton("above"), makePositionButton("middle"), makePositionButton("below"));
+
+        const styleGrid = document.createElement("div");
+        styleGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px";
+        const colorLabel = document.createElement("label");
+        colorLabel.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600";
+        colorLabel.textContent = "Text color";
+        const colorInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.value = /^#[0-9a-fA-F]{6}$/.test(task.gantt_label_color || "") ? task.gantt_label_color : "#e6edf3";
+        colorInput.style.cssText = "display:block;width:100%;height:34px;border-radius:6px;padding:2px;margin-top:6px;cursor:pointer";
+        colorLabel.appendChild(colorInput);
+
+        const fontLabel = document.createElement("label");
+        fontLabel.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600";
+        fontLabel.textContent = "Font";
+        const fontSelect = document.createElement("select");
+        fontSelect.style.cssText = "display:block;width:100%;height:34px;border-radius:6px;margin-top:6px";
+        const currentFont = GANTT_LABEL_FONTS.some(font => font.value === task.gantt_label_font) ? task.gantt_label_font : GANTT_LABEL_FONTS[0].value;
+        for (const font of GANTT_LABEL_FONTS) {
+          const option = document.createElement("option");
+          option.value = font.value;
+          option.textContent = font.label;
+          fontSelect.appendChild(option);
+        }
+        fontSelect.value = currentFont;
+        fontLabel.appendChild(fontSelect);
+        styleGrid.append(colorLabel, fontLabel);
+
+        content.append(summary, textLabel, posLabel, positionWrap, styleGrid);
+
+        const foot = document.createElement("div");
+        foot.className = "modal-foot";
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.className = "danger";
+        clear.textContent = "Clear";
+        clear.addEventListener("click", () => close({ clear: true, text: "", position }));
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.textContent = "Cancel";
+        cancel.addEventListener("click", () => close(null));
+        const save = document.createElement("button");
+        save.type = "button";
+        save.className = "primary";
+        save.textContent = "Save";
+        save.addEventListener("click", () => close({ text: input.value, position, color: colorInput.value, font: fontSelect.value }));
+        foot.append(clear, cancel, save);
+
+        box.append(head, content, foot);
+        el.modal.appendChild(box);
+        el.modal.classList.add("show");
+        el.modal.setAttribute("aria-hidden", "false");
+
+        const focusables = () => [...box.querySelectorAll("input,button")];
+        const close = value => {
+          el.modal.classList.remove("show");
+          el.modal.setAttribute("aria-hidden", "true");
+          el.modal.replaceChildren();
+          document.removeEventListener("keydown", trap);
+          resolve(value);
+        };
+        const trap = event => {
+          if (event.key === "Escape") close(null);
+          if (event.key === "Enter" && document.activeElement === input) {
+            event.preventDefault();
+            close({ text: input.value, position, color: colorInput.value, font: fontSelect.value });
+          }
+          if (event.key !== "Tab") return;
+          const nodes = focusables();
+          const first = nodes[0];
+          const last = nodes.at(-1);
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        };
+        document.addEventListener("keydown", trap);
+        setTimeout(() => {
+          input.focus();
+          input.select();
+        }, 0);
+      });
+    }
+
+    function showGanttLinesDialog({ lines, tasks }) {
+      return new Promise(resolve => {
+        let localLines = sanitizeGanttLines(lines);
+        const taskOptions = tasks.filter(task => Number.isFinite(Number(task.id)));
+        el.modal.replaceChildren();
+        const box = document.createElement("div");
+        box.className = "modal-box";
+        box.setAttribute("role", "dialog");
+        box.setAttribute("aria-modal", "true");
+        box.setAttribute("aria-labelledby", "modal-title");
+
+        const head = document.createElement("div");
+        head.className = "modal-head";
+        const h = document.createElement("h2");
+        h.id = "modal-title";
+        h.className = "font-semibold";
+        h.textContent = "Gantt Lines";
+        head.appendChild(h);
+
+        const content = document.createElement("div");
+        content.className = "modal-body";
+        const list = document.createElement("div");
+        list.style.cssText = "display:grid;gap:8px;margin-bottom:14px";
+
+        const form = document.createElement("div");
+        form.style.cssText = "border-top:1px solid var(--border);padding-top:14px";
+        const grid = document.createElement("div");
+        grid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:12px";
+
+        const typeLabel = document.createElement("label");
+        typeLabel.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600";
+        typeLabel.textContent = "Line alignment";
+        const typeSelect = document.createElement("select");
+        typeSelect.setAttribute("aria-label", "Line alignment");
+        typeSelect.style.cssText = "display:block;width:100%;height:34px;border-radius:6px;margin-top:6px";
+        for (const [value, label] of [["date", "Date"], ["task", "Task"]]) {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = label;
+          typeSelect.appendChild(option);
+        }
+        typeLabel.appendChild(typeSelect);
+
+        const dateLabel = document.createElement("label");
+        dateLabel.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600";
+        dateLabel.textContent = "Date";
+        const dateInput = document.createElement("input");
+        dateInput.type = "date";
+        dateInput.setAttribute("aria-label", "Date");
+        dateInput.value = state.gantt?.minDate || todayIso();
+        dateInput.style.cssText = "display:block;width:100%;height:34px;border-radius:6px;margin-top:6px";
+        dateLabel.appendChild(dateInput);
+
+        const taskLabel = document.createElement("label");
+        taskLabel.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600";
+        taskLabel.textContent = "Task";
+        const taskSelect = document.createElement("select");
+        taskSelect.setAttribute("aria-label", "Task");
+        taskSelect.style.cssText = "display:block;width:100%;height:34px;border-radius:6px;margin-top:6px";
+        for (const task of taskOptions) {
+          const option = document.createElement("option");
+          option.value = task.id;
+          option.textContent = `${task.wbs_code || task.id} ${task.title}`.trim();
+          taskSelect.appendChild(option);
+        }
+        taskLabel.appendChild(taskSelect);
+
+        const colorLabel = document.createElement("label");
+        colorLabel.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600";
+        colorLabel.textContent = "Line color";
+        const colorInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.setAttribute("aria-label", "Line color");
+        colorInput.value = DEFAULT_GANTT_LINE.color;
+        colorInput.style.cssText = "display:block;width:100%;height:34px;border-radius:6px;padding:2px;margin-top:6px;cursor:pointer";
+        colorLabel.appendChild(colorInput);
+
+        const thicknessLabel = document.createElement("label");
+        thicknessLabel.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600";
+        thicknessLabel.textContent = "Line thickness";
+        const thicknessInput = document.createElement("input");
+        thicknessInput.type = "number";
+        thicknessInput.setAttribute("aria-label", "Line thickness");
+        thicknessInput.min = "1";
+        thicknessInput.max = "12";
+        thicknessInput.step = "1";
+        thicknessInput.value = String(DEFAULT_GANTT_LINE.thickness);
+        thicknessInput.style.cssText = "display:block;width:100%;height:34px;border-radius:6px;margin-top:6px";
+        thicknessLabel.appendChild(thicknessInput);
+
+        const addRow = document.createElement("div");
+        addRow.style.cssText = "display:flex;justify-content:flex-end;margin-top:12px";
+        const add = document.createElement("button");
+        add.type = "button";
+        add.className = "primary";
+        add.textContent = "Add Line";
+        add.addEventListener("click", () => {
+          const line = sanitizeGanttLine({
+            type: typeSelect.value,
+            date: dateInput.value,
+            task_id: taskSelect.value,
+            color: colorInput.value,
+            thickness: thicknessInput.value
+          });
+          if (line.type === "date" && !line.date) return showToast("Choose a valid line date", "error");
+          if (line.type === "task" && line.task_id == null) return showToast("Choose a task for the line", "error");
+          localLines = sanitizeGanttLines([...localLines, line]);
+          renderList();
+        });
+        addRow.appendChild(add);
+
+        grid.append(typeLabel, dateLabel, taskLabel, colorLabel, thicknessLabel);
+        form.append(grid, addRow);
+        content.append(list, form);
+
+        const setMode = () => {
+          const isTask = typeSelect.value === "task";
+          dateInput.disabled = isTask;
+          taskSelect.disabled = !isTask || !taskOptions.length;
+          dateLabel.style.opacity = isTask ? ".45" : "1";
+          taskLabel.style.opacity = isTask && taskOptions.length ? "1" : ".45";
+        };
+        typeSelect.addEventListener("change", setMode);
+
+        const renderList = () => {
+          list.replaceChildren();
+          if (!localLines.length) {
+            const empty = document.createElement("div");
+            empty.style.cssText = "color:var(--text-muted);font-size:13px";
+            empty.textContent = "No custom Gantt lines yet.";
+            list.appendChild(empty);
+            return;
+          }
+          for (const line of localLines) {
+            const row = document.createElement("div");
+            row.style.cssText = "display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center;border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--bg-primary)";
+            const swatch = document.createElement("span");
+            swatch.style.cssText = `display:block;width:14px;height:14px;border-radius:3px;background:${line.color}`;
+            const task = taskOptions.find(item => Number(item.id) === Number(line.task_id));
+            const description = line.type === "date"
+              ? `Date line at ${line.date}`
+              : `Task line at ${task ? `${task.wbs_code || task.id} ${task.title}`.trim() : `task ${line.task_id}`}`;
+            const label = document.createElement("div");
+            label.style.cssText = "color:var(--text-primary);font-size:13px";
+            label.textContent = `${description} - ${line.thickness}px`;
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "danger";
+            remove.textContent = "Remove";
+            remove.setAttribute("aria-label", `Remove ${description}`);
+            remove.addEventListener("click", () => {
+              localLines = localLines.filter(item => item.id !== line.id);
+              renderList();
+            });
+            row.append(swatch, label, remove);
+            list.appendChild(row);
+          }
+        };
+
+        const foot = document.createElement("div");
+        foot.className = "modal-foot";
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.textContent = "Cancel";
+        cancel.addEventListener("click", () => close(null));
+        const save = document.createElement("button");
+        save.type = "button";
+        save.className = "primary";
+        save.textContent = "Apply";
+        save.addEventListener("click", () => close(localLines));
+        foot.append(cancel, save);
+
+        box.append(head, content, foot);
+        el.modal.appendChild(box);
+        el.modal.classList.add("show");
+        el.modal.setAttribute("aria-hidden", "false");
+
+        const focusables = () => [...box.querySelectorAll("input,select,button")].filter(node => !node.disabled);
+        const close = value => {
+          el.modal.classList.remove("show");
+          el.modal.setAttribute("aria-hidden", "true");
+          el.modal.replaceChildren();
+          document.removeEventListener("keydown", trap);
+          resolve(value);
+        };
+        const trap = event => {
+          if (event.key === "Escape") close(null);
+          if (event.key !== "Tab") return;
+          const nodes = focusables();
+          const first = nodes[0];
+          const last = nodes.at(-1);
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        };
+        setMode();
+        renderList();
+        document.addEventListener("keydown", trap);
+        setTimeout(() => typeSelect.focus(), 0);
+      });
+    }
+
     // Column chooser dialog. Resolves to an array of hidden column keys, or null if cancelled.
     function showColumnChooser({ columns, alwaysVisible, hidden }) {
       return new Promise(resolve => {
@@ -4914,6 +7381,653 @@
       closeBtn.addEventListener("click", close);
       document.addEventListener("keydown", trap);
       setTimeout(() => closeBtn.focus(), 0);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Portfolio Management and Switching Helpers
+    // ─────────────────────────────────────────────────────────────────────────────
+    async function getProjectsList() {
+      let list = null;
+      try {
+        const stored = localStorage.getItem("novaplan_projects");
+        if (stored) list = JSON.parse(stored);
+      } catch {}
+      if (!list || !Array.isArray(list) || list.length === 0) {
+        list = ["Default Project"];
+        localStorage.setItem("novaplan_projects", JSON.stringify(list));
+      }
+      return list;
+    }
+
+    async function updateProjectSelectOptions() {
+      const list = await getProjectsList();
+      const select = el.projectSelect;
+      if (!select) return;
+      select.replaceChildren();
+      for (const proj of list) {
+        const opt = document.createElement("option");
+        opt.value = proj;
+        opt.textContent = proj;
+        select.appendChild(opt);
+      }
+      const hr = document.createElement("option");
+      hr.disabled = true;
+      hr.textContent = "──────────";
+      select.appendChild(hr);
+      const newOpt = document.createElement("option");
+      newOpt.value = "__new__";
+      newOpt.textContent = "+ Create Project...";
+      select.appendChild(newOpt);
+      const manageOpt = document.createElement("option");
+      manageOpt.value = "__portfolio__";
+      manageOpt.textContent = "📋 Portfolio Overview";
+      select.appendChild(manageOpt);
+      select.value = state.activeProject || "Default Project";
+    }
+
+    async function createProjectPrompt() {
+      const res = await showFormDialog({
+        title: "Create Project",
+        fields: [
+          { name: "name", label: "Enter new project name:", type: "text", value: "" }
+        ],
+        onSubmit: (res) => {
+          if (!res.name.trim()) return "Project name is required";
+        }
+      });
+      if (res == null) return;
+      const trimmed = res.name.trim();
+      const list = await getProjectsList();
+      if (list.includes(trimmed)) {
+        showToast("A project with that name already exists", "error");
+        return;
+      }
+      list.push(trimmed);
+      localStorage.setItem("novaplan_projects", JSON.stringify(list));
+      await updateProjectSelectOptions();
+      await switchProject(trimmed);
+    }
+
+    async function renameProjectPrompt(oldName) {
+      if (oldName === "Default Project") return;
+      const res = await showFormDialog({
+        title: "Rename Project",
+        fields: [
+          { name: "name", label: `Rename project "${oldName}" to:`, type: "text", value: oldName }
+        ],
+        onSubmit: (res) => {
+          if (!res.name.trim()) return "Project name is required";
+        }
+      });
+      if (res == null) return;
+      const trimmed = res.name.trim();
+      if (trimmed === oldName) return;
+      const list = await getProjectsList();
+      if (list.includes(trimmed)) {
+        showToast("A project with that name already exists", "error");
+        return;
+      }
+      const idx = list.indexOf(oldName);
+      if (idx !== -1) {
+        list[idx] = trimmed;
+        localStorage.setItem("novaplan_projects", JSON.stringify(list));
+      }
+      try {
+        const bytes = await StorageEngine.loadPersistedBytesForProject(oldName);
+        if (bytes) {
+          await StorageEngine.persistBytesForProject(trimmed, bytes);
+          await StorageEngine.deleteProjectStorage(oldName);
+        }
+      } catch (err) {
+        console.error("Error migrating database on rename:", err);
+      }
+      if (state.activeProject === oldName) {
+        state.activeProject = trimmed;
+        localStorage.setItem("novaplan_active_project", trimmed);
+      }
+      await updateProjectSelectOptions();
+      if (state.view.mode === "portfolio") {
+        await PortfolioView.render();
+      } else {
+        await AppShell.refresh();
+      }
+      showToast(`Project renamed to: ${trimmed}`, "success");
+    }
+
+    async function deleteProjectPrompt(proj) {
+      if (proj === "Default Project") return;
+      const confirmed = await showConfirmDialog({
+        title: "Delete Project",
+        body: `Are you sure you want to delete project "${proj}"? This will permanently erase all tasks and project data.`,
+        buttons: [
+          { label: "Cancel", value: false },
+          { label: "Delete", value: true, variant: "danger" }
+        ]
+      });
+      if (!confirmed) return;
+      const list = await getProjectsList();
+      const idx = list.indexOf(proj);
+      if (idx !== -1) {
+        list.splice(idx, 1);
+        localStorage.setItem("novaplan_projects", JSON.stringify(list));
+      }
+      await StorageEngine.deleteProjectStorage(proj);
+      if (state.activeProject === proj) {
+        state.activeProject = "Default Project";
+        localStorage.setItem("novaplan_active_project", "Default Project");
+        const initialBytes = await StorageEngine.loadPersistedBytes();
+        StorageEngine.db = initialBytes ? new StorageEngine.SQL.Database(initialBytes) : new StorageEngine.SQL.Database();
+        StorageEngine.db.run("PRAGMA foreign_keys = ON");
+        StorageEngine.createSchema();
+        await StorageEngine.persist();
+      }
+      await updateProjectSelectOptions();
+      if (state.view.mode === "portfolio") {
+        await PortfolioView.render();
+      } else {
+        await AppShell.refresh();
+      }
+      showToast(`Project "${proj}" deleted`, "success");
+    }
+
+    async function switchProject(proj) {
+      await StorageEngine.persist();
+      state.activeProject = proj;
+      localStorage.setItem("novaplan_active_project", proj);
+      el.projectSelect.value = proj;
+      const initialBytes = await StorageEngine.loadPersistedBytes();
+      StorageEngine.db = initialBytes ? new StorageEngine.SQL.Database(initialBytes) : new StorageEngine.SQL.Database();
+      StorageEngine.db.run("PRAGMA foreign_keys = ON");
+      StorageEngine.createSchema();
+      await StorageEngine.persist();
+      state.collapsedIds.clear();
+      state.selectedIds.clear();
+      if (state.view.mode === "portfolio") {
+        state.view.mode = "split";
+        el.viewSelect.value = "split";
+      }
+      await AppShell.refresh();
+      showToast(`Switched to project: ${proj}`, "success");
+    }
+
+    async function getProjectSummary(proj) {
+      const bytes = await StorageEngine.loadPersistedBytesForProject(proj);
+      if (!bytes) {
+        return { totalTasks: 0, criticalTasks: 0, slippedTasks: 0, openRaidItems: 0, finishDate: "-" };
+      }
+      let db = null;
+      try {
+        db = new StorageEngine.SQL.Database(bytes);
+        const totalTasksRows = execRows(db, "SELECT id, parent_id, is_critical, status, start_date, end_date, actual_start_date, actual_end_date, progress FROM tasks");
+        const parentIds = new Set(totalTasksRows.map(t => t.parent_id).filter(Boolean));
+        const leafTasksRows = totalTasksRows.filter(t => !parentIds.has(t.id));
+        const totalTasks = leafTasksRows.length;
+        const criticalTasks = leafTasksRows.filter(t => t.is_critical).length;
+        let slippedTasks = 0;
+        for (const t of leafTasksRows) {
+          const slip = slippageStatus(t);
+          if (slip === "slipped" || slip === "at-risk") slippedTasks++;
+        }
+        const openRaidRows = execRows(db, "SELECT id FROM raid_items WHERE status != 'Closed'");
+        const openRaidItems = openRaidRows.length;
+        const finishDates = leafTasksRows.map(t => t.end_date).filter(isValidIsoDate).sort();
+        const finishDate = finishDates.at(-1) || "-";
+        return { totalTasks, criticalTasks, slippedTasks, openRaidItems, finishDate };
+      } catch (err) {
+        console.error("Error summarizing project:", proj, err);
+        return { totalTasks: 0, criticalTasks: 0, slippedTasks: 0, openRaidItems: 0, finishDate: "-" };
+      } finally {
+        if (db) db.close();
+      }
+    }
+
+    const PortfolioView = {
+      async render() {
+        el.boardTitle.textContent = "Portfolio Projects";
+        el.boardSummary.textContent = "Multi-Project Overview";
+        const projects = await getProjectsList();
+        const table = document.createElement("table");
+        table.className = "analysis-table";
+        table.style.cssText = "table-layout: auto; min-width: 100%; width: 100%;";
+        const thead = document.createElement("thead");
+        thead.innerHTML = `
+          <tr style="border-bottom: 2px solid var(--border); height: 40px; font-weight: 600;">
+            <th style="padding: 8px; text-align: left;">Project Name</th>
+            <th style="padding: 8px; text-align: center;">Total Tasks</th>
+            <th style="padding: 8px; text-align: center;">Critical Tasks</th>
+            <th style="padding: 8px; text-align: center;">Slipped Tasks</th>
+            <th style="padding: 8px; text-align: center;">Open RAID Items</th>
+            <th style="padding: 8px; text-align: center;">Finish Date</th>
+            <th style="padding: 8px; text-align: right;">Actions</th>
+          </tr>
+        `;
+        table.appendChild(thead);
+        const tbody = document.createElement("tbody");
+        for (const proj of projects) {
+          const summary = await getProjectSummary(proj);
+          const tr = document.createElement("tr");
+          tr.style.cssText = "border-bottom: 1px solid var(--border); height: 40px;";
+          if (proj === state.activeProject) {
+            tr.style.backgroundColor = "rgba(0, 212, 255, 0.05)";
+          }
+          const tdName = document.createElement("td");
+          tdName.style.padding = "8px";
+          const link = document.createElement("button");
+          link.className = "text-sky-400 hover:underline bg-transparent border-0 p-0 h-auto font-semibold";
+          link.textContent = proj;
+          link.addEventListener("click", () => switchProject(proj));
+          tdName.appendChild(link);
+          if (proj === state.activeProject) {
+            const badge = document.createElement("span");
+            badge.style.cssText = "background: var(--neon-cyan); color: var(--bg-primary); padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 8px; font-size: 11px;";
+            badge.textContent = "Active";
+            tdName.appendChild(badge);
+          }
+          tr.appendChild(tdName);
+          const tdTotal = document.createElement("td");
+          tdTotal.style.cssText = "padding: 8px; text-align: center;";
+          tdTotal.textContent = summary.totalTasks;
+          tr.appendChild(tdTotal);
+          const tdCrit = document.createElement("td");
+          tdCrit.style.cssText = "padding: 8px; text-align: center;";
+          tdCrit.textContent = summary.criticalTasks;
+          if (summary.criticalTasks > 0) tdCrit.style.color = "var(--danger)";
+          tr.appendChild(tdCrit);
+          const tdSlip = document.createElement("td");
+          tdSlip.style.cssText = "padding: 8px; text-align: center;";
+          tdSlip.textContent = summary.slippedTasks;
+          if (summary.slippedTasks > 0) tdSlip.style.color = "var(--neon-orange)";
+          tr.appendChild(tdSlip);
+          const tdRaid = document.createElement("td");
+          tdRaid.style.cssText = "padding: 8px; text-align: center;";
+          tdRaid.textContent = summary.openRaidItems;
+          if (summary.openRaidItems > 0) tdRaid.style.color = "var(--neon-purple)";
+          tr.appendChild(tdRaid);
+          const tdFinish = document.createElement("td");
+          tdFinish.style.cssText = "padding: 8px; text-align: center;";
+          tdFinish.textContent = summary.finishDate;
+          tr.appendChild(tdFinish);
+          const tdActions = document.createElement("td");
+          tdActions.style.cssText = "padding: 8px; text-align: right;";
+          if (proj !== "Default Project") {
+            const renameBtn = document.createElement("button");
+            renameBtn.textContent = "Rename";
+            renameBtn.className = "text-xs bg-slate-800 text-slate-300 hover:border-slate-500 border border-slate-700 rounded px-2 py-1 h-auto mr-1";
+            renameBtn.addEventListener("click", () => renameProjectPrompt(proj));
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "Delete";
+            deleteBtn.className = "text-xs bg-red-950 text-red-400 hover:border-red-600 border border-red-900 rounded px-2 py-1 h-auto";
+            deleteBtn.addEventListener("click", () => deleteProjectPrompt(proj));
+            tdActions.append(renameBtn, deleteBtn);
+          }
+          tr.appendChild(tdActions);
+          tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+        const container = document.createElement("div");
+        container.className = "p-6 overflow-auto max-w-4xl mx-auto";
+        const newProjBtn = document.createElement("button");
+        newProjBtn.className = "primary text-sm font-semibold mb-4";
+        newProjBtn.textContent = "+ Create New Project";
+        newProjBtn.addEventListener("click", () => createProjectPrompt());
+        container.appendChild(newProjBtn);
+        container.appendChild(table);
+        el.board.replaceChildren(container);
+      }
+    };
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Jira and GitHub Two-Way Sync
+    // ─────────────────────────────────────────────────────────────────────────────
+    function showIntegrationsDialog() {
+      return new Promise(resolve => {
+        el.modal.replaceChildren();
+        const box = document.createElement("div");
+        box.className = "modal-box";
+        box.setAttribute("role", "dialog");
+        box.setAttribute("aria-modal", "true");
+        box.setAttribute("aria-labelledby", "modal-title");
+        box.style.width = "500px";
+
+        const head = document.createElement("div");
+        head.className = "modal-head";
+        const h = document.createElement("h2");
+        h.id = "modal-title";
+        h.className = "font-semibold";
+        h.textContent = "Integrations & Sync";
+        head.appendChild(h);
+
+        const content = document.createElement("div");
+        content.className = "modal-body";
+        content.style.maxHeight = "400px";
+        content.style.overflowY = "auto";
+
+        let jiraCreds = { host: "", email: "", token: "", proxy: "" };
+        try {
+          jiraCreds = JSON.parse(localStorage.getItem("novaplan_jira_credentials") || "{}");
+        } catch {}
+
+        const jiraHeading = document.createElement("h3");
+        jiraHeading.style.cssText = "font-weight:600;margin-bottom:8px;color:var(--neon-cyan);border-bottom:1px solid var(--border);padding-bottom:4px;";
+        jiraHeading.textContent = "Jira Cloud Integration";
+        content.appendChild(jiraHeading);
+
+        const createField = (labelVal, value, placeholder, isPassword = false) => {
+          const lbl = document.createElement("label");
+          lbl.style.cssText = "display:block;font-size:12px;margin-bottom:8px;";
+          lbl.textContent = labelVal;
+          const input = document.createElement("input");
+          input.type = isPassword ? "password" : "text";
+          input.value = value || "";
+          input.placeholder = placeholder;
+          input.style.cssText = "width:100%;height:34px;border-radius:6px;padding:0 10px;margin-top:4px;";
+          lbl.appendChild(input);
+          return { label: lbl, input };
+        };
+
+        const jiraHost = createField("Jira Host URL (e.g., https://your-domain.atlassian.net)", jiraCreds.host, "https://company.atlassian.net");
+        const jiraEmail = createField("Jira Login Email", jiraCreds.email, "user@company.com");
+        const jiraToken = createField("Jira API Token (API key from Atlassian)", jiraCreds.token, "Paste API Token...", true);
+        const jiraProxy = createField("CORS Proxy URL (Optional - e.g., https://cors-anywhere.herokuapp.com/)", jiraCreds.proxy, "Leave blank to connect directly");
+        content.append(jiraHost.label, jiraEmail.label, jiraToken.label, jiraProxy.label);
+
+        const foot = document.createElement("div");
+        foot.className = "modal-foot";
+        foot.style.display = "flex";
+        foot.style.justifyContent = "space-between";
+        foot.style.alignItems = "center";
+
+        const syncGroup = document.createElement("div");
+        syncGroup.style.display = "flex";
+        syncGroup.style.gap = "8px";
+
+        const syncJiraBtn = document.createElement("button");
+        syncJiraBtn.type = "button";
+        syncJiraBtn.className = "primary text-xs";
+        syncJiraBtn.textContent = "Sync Jira";
+        syncJiraBtn.addEventListener("click", () => runJiraSync());
+
+        syncGroup.append(syncJiraBtn);
+
+        const actionsGroup = document.createElement("div");
+        actionsGroup.style.display = "flex";
+        actionsGroup.style.gap = "8px";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.textContent = "Close";
+        cancelBtn.addEventListener("click", () => close());
+
+        const saveBtn = document.createElement("button");
+        saveBtn.type = "button";
+        saveBtn.className = "primary";
+        saveBtn.textContent = "Save Configuration";
+        saveBtn.addEventListener("click", () => {
+          const jC = {
+            host: jiraHost.input.value.trim(),
+            email: jiraEmail.input.value.trim(),
+            token: jiraToken.input.value.trim(),
+            proxy: jiraProxy.input.value.trim()
+          };
+          localStorage.setItem("novaplan_jira_credentials", JSON.stringify(jC));
+          showToast("Configuration saved successfully", "success");
+        });
+
+        actionsGroup.append(saveBtn, cancelBtn);
+        foot.append(syncGroup, actionsGroup);
+        box.append(head, content, foot);
+        el.modal.appendChild(box);
+        el.modal.classList.add("show");
+        el.modal.setAttribute("aria-hidden", "false");
+
+        const close = () => {
+          el.modal.classList.remove("show");
+          el.modal.setAttribute("aria-hidden", "true");
+          el.modal.replaceChildren();
+          document.removeEventListener("keydown", trap);
+          resolve();
+        };
+
+        const trap = event => {
+          if (event.key === "Escape") close();
+        };
+        document.addEventListener("keydown", trap);
+
+        async function runJiraSync() {
+          const host = jiraHost.input.value.trim();
+          const email = jiraEmail.input.value.trim();
+          const token = jiraToken.input.value.trim();
+          const proxy = jiraProxy.input.value.trim();
+          if (!host || !email || !token) {
+            showToast("Jira Host, Email, and Token are required to sync.", "error");
+            return;
+          }
+          syncJiraBtn.disabled = true;
+          syncJiraBtn.textContent = "Syncing...";
+          try {
+            await performJiraSync({ host, email, token, proxy });
+            showToast("Jira Sync completed", "success");
+          } catch (err) {
+            showToast(`Jira Sync failed: ${err.message}`, "error", 8000);
+          } finally {
+            syncJiraBtn.disabled = false;
+            syncJiraBtn.textContent = "Sync Jira";
+          }
+        }
+
+
+      });
+    }
+
+    async function performJiraSync({ host, email, token, proxy }) {
+      const jiraTasks = state.tasks.filter(t => !t.is_summary && t.jira_url);
+      if (!jiraTasks.length) {
+        showToast("No tasks with Jira Links to sync.", "warning");
+        return;
+      }
+      const headers = {
+        "Authorization": "Basic " + btoa(email + ":" + token),
+        "Accept": "application/json"
+      };
+      for (const task of jiraTasks) {
+        const issueKey = ExportSystem.jiraIssueKey(task.jira_url);
+        if (!issueKey) continue;
+        let url = `${host}/rest/api/3/issue/${issueKey}`;
+        if (proxy) {
+          url = proxy.endsWith("/") ? proxy + url : proxy + "/" + url;
+        }
+        try {
+          const res = await fetch(url, { headers });
+          if (!res.ok) throw new Error(`Jira API returned ${res.status}`);
+          const issue = await res.json();
+          const jiraStatusCategory = issue.fields?.status?.statusCategory?.name || "";
+          
+          let targetCategory = "";
+          if (task.status === "Done") targetCategory = "Done";
+          else if (task.status === "In Progress") targetCategory = "In Progress";
+          else if (task.status === "Not Started") targetCategory = "To Do";
+
+          if (targetCategory && jiraStatusCategory !== targetCategory) {
+            const transUrl = `${host}/rest/api/3/issue/${issueKey}/transitions`;
+            const fetchTransUrl = proxy ? (proxy.endsWith("/") ? proxy + transUrl : proxy + "/" + transUrl) : transUrl;
+            const trRes = await fetch(fetchTransUrl, { headers });
+            if (trRes.ok) {
+              const trData = await trRes.json();
+              const matchingTransition = trData.transitions?.find(t => 
+                t.name.toLowerCase() === targetCategory.toLowerCase() || 
+                t.to?.statusCategory?.name.toLowerCase() === targetCategory.toLowerCase()
+              );
+              if (matchingTransition) {
+                await fetch(fetchTransUrl, {
+                  method: "POST",
+                  headers: { ...headers, "Content-Type": "application/json" },
+                  body: JSON.stringify({ transition: { id: matchingTransition.id } })
+                });
+              }
+            }
+          } else {
+            let localUpdated = false;
+            const fields = {};
+            if (jiraStatusCategory === "Done" && task.status !== "Done") {
+              fields.status = "Done";
+              fields.progress = 100;
+              fields.remaining_hours = 0;
+              localUpdated = true;
+            } else if (jiraStatusCategory === "In Progress" && task.status !== "In Progress") {
+              fields.status = "In Progress";
+              if (task.progress === 0 || task.progress === 100) fields.progress = 50;
+              localUpdated = true;
+            } else if (jiraStatusCategory === "To Do" && task.status !== "Not Started" && task.status !== "Done") {
+              fields.status = "Not Started";
+              fields.progress = 0;
+              localUpdated = true;
+            }
+            if (localUpdated) {
+              await state.storage.updateTask(task.id, fields);
+            }
+          }
+        } catch (err) {
+          console.error(`Error syncing task ${task.title} with Jira:`, err);
+        }
+      }
+      await AppShell.refresh();
+    }
+
+
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Custom Fields Configuration Dialog
+    // ─────────────────────────────────────────────────────────────────────────────
+    function showCustomFieldsDialog() {
+      return new Promise(resolve => {
+        el.modal.replaceChildren();
+        const box = document.createElement("div");
+        box.className = "modal-box";
+        box.setAttribute("role", "dialog");
+        box.setAttribute("aria-modal", "true");
+        box.setAttribute("aria-labelledby", "modal-title");
+        box.style.width = "450px";
+
+        const head = document.createElement("div");
+        head.className = "modal-head";
+        const h = document.createElement("h2");
+        h.id = "modal-title";
+        h.className = "font-semibold";
+        h.textContent = "Manage Custom Fields";
+        head.appendChild(h);
+
+        const content = document.createElement("div");
+        content.className = "modal-body";
+        const desc = document.createElement("p");
+        desc.style.cssText = "font-size: 12px; margin-bottom: 12px; color: var(--text-muted);";
+        desc.textContent = "Add custom text fields to your task grid. These columns will be fully editable and visible in the grid.";
+        content.appendChild(desc);
+
+        const listContainer = document.createElement("div");
+        listContainer.style.cssText = "max-height:200px;overflow-y:auto;margin-bottom:14px;border:1px solid var(--border);border-radius:6px;padding:8px;";
+
+        const renderList = () => {
+          listContainer.replaceChildren();
+          const list = state.customColumns || [];
+          if (!list.length) {
+            const empty = document.createElement("div");
+            empty.style.cssText = "font-size:12px;color:var(--text-muted);text-align:center;padding:16px 0;";
+            empty.textContent = "No custom fields defined yet.";
+            listContainer.appendChild(empty);
+            return;
+          }
+          for (const col of list) {
+            const row = document.createElement("div");
+            row.style.cssText = "display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);";
+            const textWrap = document.createElement("div");
+            const label = document.createElement("span");
+            label.style.cssText = "font-size:13px;font-weight:600;";
+            label.textContent = col.label;
+            const keySpan = document.createElement("span");
+            keySpan.style.cssText = "font-size:11px;color:var(--text-muted);margin-left:8px;";
+            keySpan.textContent = `(key: ${col.key})`;
+            textWrap.append(label, keySpan);
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "text-xs bg-red-950 text-red-400 border border-red-900 rounded px-2 py-1 h-auto";
+            delBtn.textContent = "Delete";
+            delBtn.addEventListener("click", () => {
+              state.customColumns = state.customColumns.filter(c => c.key !== col.key);
+              renderList();
+            });
+            row.append(textWrap, delBtn);
+            listContainer.appendChild(row);
+          }
+        };
+
+        renderList();
+        content.appendChild(listContainer);
+
+        const formDiv = document.createElement("div");
+        formDiv.style.cssText = "border-top:1px solid var(--border);padding-top:12px;display:flex;gap:8px;flex-direction:column;";
+        const inputLabel = document.createElement("label");
+        inputLabel.style.cssText = "font-size:12px;font-weight:600;";
+        inputLabel.textContent = "Field Name/Label (e.g. Department)";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.style.cssText = "width:100%;height:34px;border-radius:6px;padding:0 10px;margin-top:4px;";
+        inputLabel.appendChild(input);
+        const addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.className = "primary text-xs";
+        addBtn.textContent = "+ Add Field";
+        addBtn.style.alignSelf = "flex-end";
+        addBtn.addEventListener("click", () => {
+          const val = input.value.trim();
+          if (!val) return;
+          const key = "cust_" + val.toLowerCase().replace(/[^a-z0-9]/g, "_");
+          if ((state.customColumns || []).some(c => c.key === key)) {
+            showToast("A field with that key already exists", "error");
+            return;
+          }
+          if (!state.customColumns) state.customColumns = [];
+          state.customColumns.push({ label: val, key, type: "text", width: 120 });
+          input.value = "";
+          renderList();
+        });
+        formDiv.append(inputLabel, addBtn);
+        content.appendChild(formDiv);
+
+        const foot = document.createElement("div");
+        foot.className = "modal-foot";
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.addEventListener("click", () => close());
+        const saveBtn = document.createElement("button");
+        saveBtn.type = "button";
+        saveBtn.className = "primary";
+        saveBtn.textContent = "Save Changes";
+        saveBtn.addEventListener("click", async () => {
+          await state.storage.saveSetting("customColumns", state.customColumns);
+          close();
+          await AppShell.refresh();
+          showToast("Custom fields saved and grid updated", "success");
+        });
+        foot.append(saveBtn, cancelBtn);
+        box.append(head, content, foot);
+        el.modal.appendChild(box);
+        el.modal.classList.add("show");
+        el.modal.setAttribute("aria-hidden", "false");
+
+        const close = () => {
+          el.modal.classList.remove("show");
+          el.modal.setAttribute("aria-hidden", "true");
+          el.modal.replaceChildren();
+          document.removeEventListener("keydown", trap);
+          resolve();
+        };
+
+        const trap = event => {
+          if (event.key === "Escape") close();
+        };
+        document.addEventListener("keydown", trap);
+      });
     }
 
     AppShell.init();

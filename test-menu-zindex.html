@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Z-Index Test - Tools Menu</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .test-info {
+      background: #e3f2fd;
+      border: 2px solid #1976d2;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .test-info h2 {
+      margin-top: 0;
+      color: #1976d2;
+    }
+    .instructions {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .instructions h3 {
+      margin-top: 0;
+      color: #856404;
+    }
+    .instructions ol {
+      margin: 10px 0;
+      padding-left: 25px;
+    }
+    .instructions li {
+      margin: 8px 0;
+    }
+    button {
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #1565c0;
+    }
+    .success {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+    .error {
+      color: #c62828;
+      font-weight: bold;
+    }
+    .warning {
+      color: #f57c00;
+      font-weight: bold;
+    }
+    #result {
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      background: white;
+      padding: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      margin-top: 15px;
+      min-height: 100px;
+    }
+    iframe {
+      width: 100%;
+      height: 800px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    .z-index-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    .z-index-table th,
+    .z-index-table td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    .z-index-table th {
+      background: #f5f5f5;
+      font-weight: bold;
+    }
+    .z-index-table tr:nth-child(even) {
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-info">
+    <h2>🔍 Z-Index Test: Tools Menu Visibility</h2>
+    <p>This test verifies that the Tools menu dropdown appears above the Gantt timeline and all other elements.</p>
+  </div>
+
+  <div class="instructions">
+    <h3>📋 Manual Test Instructions:</h3>
+    <ol>
+      <li>Wait for the app to load in the iframe below</li>
+      <li>Click the <strong>"Test Z-Index"</strong> button to run automated checks</li>
+      <li><strong>Manual verification:</strong>
+        <ul>
+          <li>Scroll the Gantt timeline so it's visible</li>
+          <li>Click the <strong>Tools</strong> button in the toolbar</li>
+          <li>Verify the menu dropdown appears <strong>above</strong> the Gantt (not behind it)</li>
+          <li>Hover over menu items - they should be fully interactive</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+
+  <button onclick="runZIndexTest()">🔬 Test Z-Index</button>
+  <button onclick="openToolsMenuManual()">🔧 Open Tools Menu (Manual)</button>
+  <button onclick="location.reload()">🔄 Reload</button>
+
+  <div id="result"></div>
+
+  <iframe id="app" src="NovaPlan.html"></iframe>
+
+  <script>
+    function getAppDoc() {
+      const iframe = document.getElementById('app');
+      return iframe.contentDocument || iframe.contentWindow.document;
+    }
+
+    function openToolsMenuManual() {
+      try {
+        const doc = getAppDoc();
+        const toolsBtn = doc.getElementById('tools-menu-btn');
+        if (toolsBtn) {
+          toolsBtn.click();
+          document.getElementById('result').innerHTML = '<span class="success">✅ Tools menu opened!</span>\n\nManually verify:\n- Menu appears ABOVE Gantt timeline\n- All items are clickable\n- No visual overlap issues';
+        } else {
+          document.getElementById('result').innerHTML = '<span class="error">❌ Tools button not found</span>';
+        }
+      } catch (e) {
+        document.getElementById('result').innerHTML = '<span class="error">❌ Error: ' + e.message + '</span>';
+      }
+    }
+
+    function runZIndexTest() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '<span class="warning">⏳ Running z-index test...</span>\n';
+
+      try {
+        const doc = getAppDoc();
+
+        // Check if app is loaded
+        const loadingOverlay = doc.getElementById('loading-overlay');
+        if (loadingOverlay && window.getComputedStyle(loadingOverlay).display !== 'none') {
+          resultDiv.innerHTML = '<span class="warning">⏳ App loading... Please wait and try again.</span>';
+          return;
+        }
+
+        const topbar = doc.querySelector('.topbar');
+        const toolsMenu = doc.getElementById('tools-menu');
+        const menuPanel = toolsMenu ? toolsMenu.querySelector('.menu-panel') : null;
+        const ganttBody = doc.getElementById('gantt-body');
+        const ganttTooltip = doc.querySelector('.gantt-tooltip');
+        const contextMenu = doc.querySelector('.context-menu');
+        const modalOverlay = doc.querySelector('.modal-overlay');
+
+        let report = '=== Z-INDEX HIERARCHY TEST ===\n\n';
+
+        // Collect z-index values
+        const elements = [
+          { name: 'Topbar', el: topbar },
+          { name: 'Tools Menu (.menu)', el: toolsMenu },
+          { name: 'Menu Panel (.menu-panel)', el: menuPanel },
+          { name: 'Gantt Body', el: ganttBody },
+          { name: 'Gantt Tooltip', el: ganttTooltip },
+          { name: 'Context Menu', el: contextMenu },
+          { name: 'Modal Overlay', el: modalOverlay }
+        ];
+
+        const zIndexValues = [];
+
+        elements.forEach(item => {
+          if (item.el) {
+            const computedStyle = window.getComputedStyle(item.el);
+            const zIndex = computedStyle.zIndex;
+            const position = computedStyle.position;
+            zIndexValues.push({
+              name: item.name,
+              zIndex: zIndex === 'auto' ? 'auto (0)' : zIndex,
+              position: position,
+              element: item.el
+            });
+          }
+        });
+
+        // Sort by z-index
+        zIndexValues.sort((a, b) => {
+          const aZ = a.zIndex === 'auto (0)' ? 0 : parseInt(a.zIndex);
+          const bZ = b.zIndex === 'auto (0)' ? 0 : parseInt(b.zIndex);
+          return bZ - aZ;
+        });
+
+        report += 'Z-Index Values (highest to lowest):\n';
+        report += '─────────────────────────────────────────\n';
+        zIndexValues.forEach(item => {
+          const zNum = item.zIndex === 'auto (0)' ? 0 : parseInt(item.zIndex);
+          const symbol = zNum >= 100 ? '✅' : zNum >= 50 ? '⚠️' : '❌';
+          report += `${symbol} ${item.name.padEnd(25)} z-index: ${String(item.zIndex).padEnd(12)} position: ${item.position}\n`;
+        });
+
+        report += '\n=== CRITICAL CHECKS ===\n\n';
+
+        // Check 1: Menu panel z-index > 50
+        const menuPanelZ = menuPanel ? parseInt(window.getComputedStyle(menuPanel).zIndex) : 0;
+        if (menuPanelZ >= 100) {
+          report += '✅ Menu Panel z-index is sufficient (>= 100)\n';
+        } else if (menuPanelZ >= 50) {
+          report += '⚠️ Menu Panel z-index is moderate (' + menuPanelZ + ')\n';
+        } else {
+          report += '❌ Menu Panel z-index is TOO LOW (' + menuPanelZ + ')\n';
+        }
+
+        // Check 2: Topbar has z-index
+        const topbarZ = topbar ? window.getComputedStyle(topbar).zIndex : 'none';
+        if (topbarZ !== 'auto' && parseInt(topbarZ) >= 50) {
+          report += '✅ Topbar has proper z-index (' + topbarZ + ')\n';
+        } else {
+          report += '⚠️ Topbar z-index: ' + topbarZ + '\n';
+        }
+
+        // Check 3: Menu panel position
+        const menuPanelPos = menuPanel ? window.getComputedStyle(menuPanel).position : 'none';
+        if (menuPanelPos === 'absolute' || menuPanelPos === 'fixed') {
+          report += '✅ Menu Panel has proper positioning (' + menuPanelPos + ')\n';
+        } else {
+          report += '❌ Menu Panel positioning issue: ' + menuPanelPos + '\n';
+        }
+
+        report += '\n=== EXPECTED HIERARCHY ===\n';
+        report += 'Context Menu (1000) > Menu Panel (100) > Topbar (50) > Gantt Tooltip (40) > Gantt Body (auto)\n';
+
+        report += '\n=== TEST RESULT ===\n';
+        if (menuPanelZ >= 100 && topbarZ !== 'auto' && parseInt(topbarZ) >= 50) {
+          report += '✅ PASSED! Menu should appear above Gantt timeline.\n';
+          report += '\n💡 Manual verification recommended: Click Tools button and check visibility.';
+        } else if (menuPanelZ >= 50) {
+          report += '⚠️ PARTIAL PASS. Menu z-index may need adjustment.\n';
+          report += '\n💡 Please verify manually by clicking the Tools button.';
+        } else {
+          report += '❌ FAILED! Menu z-index is too low and will be hidden behind Gantt.\n';
+          report += '\n🔧 FIX: Increase .menu-panel z-index to 100 or higher.';
+        }
+
+        resultDiv.innerHTML = report;
+
+      } catch (e) {
+        resultDiv.innerHTML = '<span class="error">❌ ERROR: ' + e.message + '</span>\n\n' + e.stack;
+      }
+    }
+
+    // Auto-run test when iframe loads
+    window.addEventListener('load', () => {
+      const iframe = document.getElementById('app');
+      iframe.addEventListener('load', () => {
+        setTimeout(() => {
+          const doc = getAppDoc();
+          const loadingOverlay = doc.getElementById('loading-overlay');
+          if (loadingOverlay) {
+            const checkLoaded = setInterval(() => {
+              if (window.getComputedStyle(loadingOverlay).display === 'none') {
+                clearInterval(checkLoaded);
+                document.getElementById('result').innerHTML = '<span class="success">✅ App loaded!</span> Click "Test Z-Index" to run checks.';
+              }
+            }, 500);
+          }
+        }, 1000);
+      });
+    });
+  </script>
+</body>
+</html>

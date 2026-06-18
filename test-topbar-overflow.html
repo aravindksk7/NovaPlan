@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Topbar Overflow Fix - Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 20px;
+      max-width: 1600px;
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+    .test-header {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .test-header h1 {
+      margin: 0 0 10px 0;
+      font-size: 32px;
+    }
+    .test-header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 16px;
+    }
+    .test-section {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .test-section h2 {
+      margin-top: 0;
+      color: #ff6b6b;
+      font-size: 24px;
+      border-bottom: 2px solid #ff6b6b;
+      padding-bottom: 10px;
+    }
+    .issue-box {
+      background: #fee;
+      border: 2px solid #fcc;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .issue-box h3 {
+      margin: 0 0 10px 0;
+      color: #c00;
+    }
+    .issue-box ul {
+      margin: 10px 0;
+      padding-left: 25px;
+    }
+    .issue-box li {
+      margin: 5px 0;
+      color: #900;
+    }
+    .fix-box {
+      background: #efe;
+      border: 2px solid #cfc;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .fix-box h3 {
+      margin: 0 0 10px 0;
+      color: #0a0;
+    }
+    .fix-box ul {
+      margin: 10px 0;
+      padding-left: 25px;
+    }
+    .fix-box li {
+      margin: 8px 0;
+      color: #060;
+    }
+    .test-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    button {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      background: #ee5a6f;
+      transform: translateY(-2px);
+    }
+    .resize-demo {
+      background: #fff3cd;
+      border: 2px dashed #ffc107;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .resize-demo h3 {
+      margin: 0 0 15px 0;
+      color: #856404;
+    }
+    .window-size {
+      font-family: monospace;
+      font-size: 18px;
+      font-weight: bold;
+      color: #856404;
+      margin: 10px 0;
+    }
+    iframe {
+      width: 100%;
+      height: 800px;
+      border: 3px solid #dee2e6;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    .checklist {
+      background: #e3f2fd;
+      border: 2px solid #2196f3;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .checklist h3 {
+      margin: 0 0 15px 0;
+      color: #1565c0;
+    }
+    .checklist ul {
+      margin: 10px 0;
+      padding-left: 25px;
+      list-style: none;
+    }
+    .checklist li {
+      margin: 10px 0;
+      color: #1976d2;
+      position: relative;
+      padding-left: 30px;
+    }
+    .checklist li:before {
+      content: '🔍';
+      position: absolute;
+      left: 0;
+      font-size: 20px;
+    }
+    .code-comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .code-box {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+    .code-box h4 {
+      margin: 0 0 10px 0;
+      color: #50fa7b;
+      font-size: 14px;
+      border-bottom: 1px solid #44475a;
+      padding-bottom: 5px;
+    }
+    .code-box .before { color: #ff5555; }
+    .code-box .after { color: #50fa7b; }
+    .code-box .property { color: #8be9fd; }
+    .code-box .value { color: #f1fa8c; }
+  </style>
+</head>
+<body>
+  <div class="test-header">
+    <h1>🔧 Topbar Overflow Fix - Visibility Test</h1>
+    <p>Testing Help button and Theme switcher visibility at 100% zoom</p>
+  </div>
+
+  <div class="test-section">
+    <h2>🐛 The Problem</h2>
+    <div class="issue-box">
+      <h3>❌ Original Issue</h3>
+      <ul>
+        <li><strong>Help button</strong> was overflowing and not visible at 100% zoom</li>
+        <li><strong>Theme switcher</strong> (🌙/☀️) was pushed off-screen</li>
+        <li><strong>"Created by AK"</strong> link was hidden</li>
+        <li><strong>Storage status</strong> indicator was cut off</li>
+        <li>Topbar had no flex-wrap, causing horizontal overflow</li>
+        <li>Elements had no flex-shrink: 0, allowing unwanted compression</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>✅ The Solution</h2>
+    <div class="fix-box">
+      <h3>✅ Fixes Applied</h3>
+      <ul>
+        <li><strong>Added flex-wrap: wrap</strong> to topbar - allows wrapping to second row</li>
+        <li><strong>Added flex-shrink: 0</strong> to all buttons, selects, and links</li>
+        <li><strong>Added overflow-x: auto</strong> with custom scrollbar as fallback</li>
+        <li><strong>Ensured critical elements</strong> (Help, Theme, Status) stay visible</li>
+        <li><strong>Maintained spacer element</strong> for proper layout</li>
+        <li><strong>Added min-width to spacer</strong> to prevent complete collapse</li>
+      </ul>
+    </div>
+
+    <div class="code-comparison">
+      <div class="code-box">
+        <h4 class="before">❌ Before</h4>
+<span class="property">.topbar</span> {
+  <span class="property">display:</span> <span class="value">flex</span>;
+  <span class="property">gap:</span> <span class="value">10px</span>;
+  <span class="before">/* No flex-wrap - overflows! */</span>
+}
+
+<span class="property">button</span> {
+  <span class="property">padding:</span> <span class="value">0 10px</span>;
+  <span class="before">/* Can shrink - gets compressed! */</span>
+}
+      </div>
+      <div class="code-box">
+        <h4 class="after">✅ After</h4>
+<span class="property">.topbar</span> {
+  <span class="property">display:</span> <span class="value">flex</span>;
+  <span class="property">flex-wrap:</span> <span class="after">wrap</span>;
+  <span class="property">gap:</span> <span class="value">10px</span>;
+  <span class="property">overflow-x:</span> <span class="after">auto</span>;
+}
+
+<span class="property">button</span> {
+  <span class="property">padding:</span> <span class="value">0 10px</span>;
+  <span class="property">flex-shrink:</span> <span class="after">0</span>;
+}
+      </div>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>🧪 Interactive Testing</h2>
+
+    <div class="resize-demo">
+      <h3>📏 Window Size Monitor</h3>
+      <p>Current window width: <span class="window-size" id="window-width">---</span></p>
+      <p>Resize your browser window and watch the topbar adapt!</p>
+    </div>
+
+    <div class="test-controls">
+      <button onclick="testVisibility()">🔍 Test Element Visibility</button>
+      <button onclick="highlightElements()">✨ Highlight Critical Elements</button>
+      <button onclick="location.reload()">🔄 Reload</button>
+    </div>
+
+    <div class="checklist">
+      <h3>✅ What to Verify</h3>
+      <ul>
+        <li>At 100% zoom, all topbar elements are visible</li>
+        <li>Help button is accessible and clickable</li>
+        <li>Theme switcher (🌙/☀️) is visible and functional</li>
+        <li>"Created by AK" link is present</li>
+        <li>Storage status indicator shows on the right</li>
+        <li>Topbar wraps to second row if needed (narrow windows)</li>
+        <li>Horizontal scrollbar appears if elements don't fit in one row</li>
+        <li>No elements are cut off or hidden</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>🖼️ Live NovaPlan App</h2>
+    <p><strong>Instructions:</strong> Load the app at 100% zoom and verify all topbar elements are visible.</p>
+    <iframe id="app" src="NovaPlan.html"></iframe>
+  </div>
+
+  <script>
+    // Update window size display
+    function updateWindowSize() {
+      document.getElementById('window-width').textContent = window.innerWidth + 'px';
+    }
+    window.addEventListener('resize', updateWindowSize);
+    updateWindowSize();
+
+    function getAppDoc() {
+      const iframe = document.getElementById('app');
+      return iframe.contentDocument || iframe.contentWindow.document;
+    }
+
+    function testVisibility() {
+      try {
+        const doc = getAppDoc();
+        const elements = {
+          'Help button': doc.getElementById('help-btn'),
+          'Theme switcher': doc.getElementById('theme-toggle-btn'),
+          'Created by AK': doc.querySelector('.creator-link'),
+          'Storage status': doc.getElementById('storage-status'),
+          'Export menu': doc.getElementById('export-menu-btn'),
+          'Tools menu': doc.getElementById('tools-menu-btn')
+        };
+
+        let report = '=== ELEMENT VISIBILITY TEST ===\n\n';
+        let allVisible = true;
+
+        for (const [name, el] of Object.entries(elements)) {
+          if (!el) {
+            report += `❌ ${name}: NOT FOUND\n`;
+            allVisible = false;
+            continue;
+          }
+
+          const rect = el.getBoundingClientRect();
+          const topbar = doc.querySelector('.topbar');
+          const topbarRect = topbar.getBoundingClientRect();
+
+          const isVisible = rect.width > 0 && rect.height > 0;
+          const isInViewport = rect.right <= window.innerWidth && rect.bottom <= window.innerHeight;
+          const isInTopbar = rect.top >= topbarRect.top && rect.bottom <= topbarRect.bottom + 100;
+
+          if (isVisible && isInViewport) {
+            report += `✅ ${name}: VISIBLE\n`;
+            report += `   Position: ${Math.round(rect.left)}px from left, ${Math.round(rect.width)}px wide\n`;
+          } else {
+            report += `❌ ${name}: HIDDEN or OVERFLOW\n`;
+            report += `   Visible: ${isVisible}, In viewport: ${isInViewport}\n`;
+            allVisible = false;
+          }
+        }
+
+        report += `\n=== RESULT ===\n`;
+        if (allVisible) {
+          report += '✅ All critical elements are visible!\n';
+        } else {
+          report += '❌ Some elements are hidden or cut off.\n';
+          report += 'Try:\n';
+          report += '1. Refresh the page\n';
+          report += '2. Check browser zoom is at 100%\n';
+          report += '3. Widen browser window\n';
+        }
+
+        alert(report);
+      } catch (e) {
+        alert('❌ Error: ' + e.message + '\n\nMake sure the app is loaded.');
+      }
+    }
+
+    function highlightElements() {
+      try {
+        const doc = getAppDoc();
+        const elements = [
+          doc.getElementById('help-btn'),
+          doc.getElementById('theme-toggle-btn'),
+          doc.querySelector('.creator-link'),
+          doc.getElementById('storage-status')
+        ];
+
+        elements.forEach((el, i) => {
+          if (el) {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f7dc6f'];
+            el.style.outline = `3px solid ${colors[i]}`;
+            el.style.outlineOffset = '2px';
+
+            setTimeout(() => {
+              el.style.outline = '';
+              el.style.outlineOffset = '';
+            }, 3000);
+          }
+        });
+
+        alert('✨ Critical elements highlighted for 3 seconds!\n\nLook for colored outlines in the topbar.');
+      } catch (e) {
+        alert('❌ Error: ' + e.message);
+      }
+    }
+
+    // Auto-run visibility test when app loads
+    window.addEventListener('load', () => {
+      const iframe = document.getElementById('app');
+      iframe.addEventListener('load', () => {
+        setTimeout(() => {
+          const doc = getAppDoc();
+          const loadingOverlay = doc.getElementById('loading-overlay');
+          if (loadingOverlay) {
+            const checkLoaded = setInterval(() => {
+              if (window.getComputedStyle(loadingOverlay).display === 'none') {
+                clearInterval(checkLoaded);
+                console.log('✅ App loaded! Use test buttons to verify topbar elements.');
+              }
+            }, 500);
+          }
+        }, 1000);
+      });
+    });
+  </script>
+</body>
+</html>

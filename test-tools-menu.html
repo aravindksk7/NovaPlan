@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tools Menu Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
+    .info {
+      background: #f0f9ff;
+      border: 1px solid #0ea5e9;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      background: #0ea5e9;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #0284c7;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .result.success {
+      background: #dcfce7;
+      border: 1px solid #22c55e;
+      color: #166534;
+    }
+    .result.error {
+      background: #fee2e2;
+      border: 1px solid #ef4444;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tools Menu Visibility Test</h1>
+
+  <div class="info">
+    <h3>Test Instructions:</h3>
+    <ol>
+      <li>The NovaPlan app will load in the iframe below</li>
+      <li>Click "Test Tools Menu" to check all menu items</li>
+      <li>The test will count visible menu items and verify scrollability</li>
+    </ol>
+  </div>
+
+  <button onclick="testToolsMenu()">Test Tools Menu</button>
+  <button onclick="location.reload()">Reload Page</button>
+
+  <div id="result"></div>
+
+  <iframe id="app-frame" src="NovaPlan.html"></iframe>
+
+  <script>
+    function testToolsMenu() {
+      const resultDiv = document.getElementById('result');
+      const iframe = document.getElementById('app-frame');
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+      try {
+        // Wait for app to load
+        const loadingOverlay = doc.getElementById('loading-overlay');
+        if (loadingOverlay && window.getComputedStyle(loadingOverlay).display !== 'none') {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = 'App is still loading. Please wait and try again.';
+          return;
+        }
+
+        // Click the Tools button
+        const toolsBtn = doc.getElementById('tools-menu-btn');
+        if (!toolsBtn) {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = 'Error: Tools button not found!';
+          return;
+        }
+
+        toolsBtn.click();
+
+        // Wait a bit for the menu to open
+        setTimeout(() => {
+          const toolsMenu = doc.getElementById('tools-menu');
+          const menuPanel = toolsMenu.querySelector('.menu-panel');
+          const menuButtons = menuPanel.querySelectorAll('[data-tool]');
+
+          const totalItems = menuButtons.length;
+          let visibleCount = 0;
+          let hiddenItems = [];
+
+          menuButtons.forEach(btn => {
+            const style = window.getComputedStyle(btn);
+            if (style.display !== 'none') {
+              visibleCount++;
+            } else {
+              hiddenItems.push(btn.textContent);
+            }
+          });
+
+          // Check menu panel properties
+          const panelStyle = window.getComputedStyle(menuPanel);
+          const panelHeight = parseFloat(panelStyle.height);
+          const maxHeight = panelStyle.maxHeight;
+          const overflowY = panelStyle.overflowY;
+
+          let report = `=== Tools Menu Test Results ===\n\n`;
+          report += `Total menu items: ${totalItems}\n`;
+          report += `Visible items: ${visibleCount}\n`;
+          report += `Hidden items: ${totalItems - visibleCount}\n\n`;
+
+          if (hiddenItems.length > 0) {
+            report += `Hidden items (view-specific):\n`;
+            hiddenItems.forEach(item => report += `  - ${item}\n`);
+            report += `\n`;
+          }
+
+          report += `=== Menu Panel Properties ===\n`;
+          report += `Panel height: ${panelHeight}px\n`;
+          report += `Max height: ${maxHeight}\n`;
+          report += `Overflow-Y: ${overflowY}\n`;
+          report += `Scrollable: ${panelHeight > 600 ? 'YES' : 'NO'}\n\n`;
+
+          // Check if all expected items exist in HTML
+          const expectedItems = [
+            'Calendar Settings',
+            'Gantt Label Settings',
+            'Gantt Lines',
+            'Choose Columns',
+            'Set Baseline',
+            'View Baseline',
+            'Clear Baseline',
+            'Add Sprint',
+            'Save View',
+            'Save Scenario',
+            'Compare Scenario',
+            'Add RAID Item',
+            'Log Change',
+            'Integrations & Sync',
+            'Manage Custom Fields',
+            'Conditional Formatting',
+            'Reset All Data'
+          ];
+
+          report += `=== Item Existence Check ===\n`;
+          let allFound = true;
+          expectedItems.forEach(expected => {
+            const found = Array.from(menuButtons).some(btn => btn.textContent.includes(expected));
+            report += `${found ? '✓' : '✗'} ${expected}\n`;
+            if (!found) allFound = false;
+          });
+
+          resultDiv.className = `result ${allFound ? 'success' : 'error'}`;
+          resultDiv.textContent = report;
+
+          // Close the menu
+          toolsBtn.click();
+        }, 100);
+
+      } catch (error) {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = `Error: ${error.message}\n\n${error.stack}`;
+      }
+    }
+
+    // Auto-run test after iframe loads
+    window.addEventListener('load', () => {
+      const iframe = document.getElementById('app-frame');
+      iframe.addEventListener('load', () => {
+        // Wait for app initialization
+        setTimeout(() => {
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+          const loadingOverlay = doc.getElementById('loading-overlay');
+          if (loadingOverlay) {
+            const observer = new MutationObserver((mutations) => {
+              if (window.getComputedStyle(loadingOverlay).display === 'none') {
+                observer.disconnect();
+                setTimeout(() => {
+                  document.getElementById('result').className = 'result';
+                  document.getElementById('result').textContent = 'App loaded! Click "Test Tools Menu" button to start the test.';
+                }, 500);
+              }
+            });
+            observer.observe(loadingOverlay, { attributes: true, attributeFilter: ['style'] });
+          }
+        }, 1000);
+      });
+    });
+  </script>
+</body>
+</html>

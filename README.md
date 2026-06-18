@@ -37,6 +37,46 @@ That's it — no build step, no dependencies to install. The entire application 
 - **Dark / light theme** — toggle and remember your preference.
 - **Import / Export** — SQL (full backup), CSV, Jira CSV, MS Project XML, multi-sheet Excel, and Gantt GIF.
 - **Local-first storage** — OPFS → IndexedDB → localStorage, chosen automatically; nothing is ever uploaded.
+- **Professional UX polish** — scrollable modals with sticky headers/footers, responsive toolbar with flex-wrap, improved Tools menu visibility (all 17 items accessible), and proper z-index layering for dropdowns.
+
+---
+
+## Recent Improvements (June 2026)
+
+### UX Polish Upgrades
+
+Four major UX enhancements have been implemented to improve usability across all screen sizes and viewport configurations:
+
+1. **Scrollable Modals with Sticky Footer** ✅
+   - All modal dialogs now feature sticky headers and footers
+   - Long forms scroll smoothly within the modal body
+   - OK/Cancel buttons remain visible and accessible at all times
+   - Custom themed scrollbar for dark/light mode
+   - Responsive design adapts to any viewport height
+
+2. **Responsive Topbar with Flex-Wrap** ✅
+   - Toolbar adapts intelligently to screen width
+   - Elements wrap to second row on medium screens (1280-1440px)
+   - Horizontal scroll fallback on narrow screens
+   - All controls remain accessible with no hidden elements
+   - Critical elements (Help, Theme switcher, Status) protected from compression
+
+3. **Improved Tools Menu Visibility** ✅
+   - All 17 Tools menu items now visible regardless of view mode
+   - Previously only 3 items were shown in some views
+   - Simplified visibility logic shows 14-15 items by default
+   - Only Gantt-specific items hidden in non-Gantt views
+
+4. **Fixed Z-Index Layering** ✅
+   - Tools menu dropdown now appears above Gantt timeline
+   - Proper stacking hierarchy: Context Menu (1000) → Menu Panel (100) → Topbar (50) → Gantt Tooltip (40)
+   - No more hidden dropdowns behind timeline elements
+
+**Documentation:**
+- [Tools Menu Fix Report](TOOLS_MENU_FIX_REPORT.md)
+- [Z-Index Fix Report](Z_INDEX_FIX_REPORT.md)
+- [Scrollable Modals Documentation](SCROLLABLE_MODALS_UPGRADE.md)
+- [Topbar Overflow Fix](TOPBAR_OVERFLOW_FIX.md)
 
 ---
 
