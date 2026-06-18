@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NovaPlan – Free Single-File Project Planner (Gantt, WBS, Kanban)</title>
+  <meta name="description" content="NovaPlan is a free, zero-install project planner that runs entirely in your browser. One HTML file: Gantt chart, WBS, critical path, Kanban board, sprint planning, RAID log, resource workload, and Excel/GIF export." />
+  <meta name="keywords" content="project planner, gantt chart, kanban board, work breakdown structure, critical path method, sprint planning, free project management, offline, single file, no install, browser app" />
+  <meta name="author" content="AK" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://aravindksk7.github.io/NovaPlan/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="NovaPlan – Free Single-File Project Planner" />
+  <meta property="og:description" content="Zero-install project management in one HTML file. Gantt chart, WBS, CPM, Kanban, sprints, RAID log, Excel &amp; GIF export. Runs offline in any browser." />
+  <meta property="og:url" content="https://aravindksk7.github.io/NovaPlan/" />
+  <meta property="og:image" content="https://raw.githubusercontent.com/aravindksk7/NovaPlan/main/screenshot.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="NovaPlan – Free Single-File Project Planner" />
+  <meta name="twitter:description" content="Zero-install project management: Gantt chart, WBS, Kanban, sprints, RAID log. One HTML file. No sign-up. Runs offline." />
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/aravindksk7/NovaPlan/main/screenshot.png" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "NovaPlan",
+    "description": "Free single-file project planner with Gantt chart, WBS, Critical Path Method, Kanban board, sprint planning, and RAID log. Zero install — runs offline in any browser.",
+    "applicationCategory": "BusinessApplication",
+    "applicationSubCategory": "Project Management",
+    "operatingSystem": "Any modern web browser",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "url": "https://aravindksk7.github.io/NovaPlan/",
+    "downloadUrl": "https://raw.githubusercontent.com/aravindksk7/NovaPlan/main/NovaPlan.html",
+    "screenshot": "https://raw.githubusercontent.com/aravindksk7/NovaPlan/main/screenshot.png",
+    "softwareVersion": "1.0",
+    "license": "https://opensource.org/licenses/MIT",
+    "author": { "@type": "Person", "name": "AK", "url": "https://github.com/aravindksk7" },
+    "featureList": ["Gantt chart", "Work Breakdown Structure", "Critical Path Method", "Kanban board", "Sprint planning", "RAID log", "Resource workload", "Offline first", "No installation required", "Excel export", "Animated GIF export"]
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --danger: #f85149;
+      --purple: #bc8cff;
+      --teal: #39d3c3;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; line-height: 1.6; }
+
+    /* NAV */
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(13,17,23,.92); backdrop-filter: blur(10px); z-index: 100; }
+    .nav-brand { font-size: 1.25rem; font-weight: 700; color: var(--accent); letter-spacing: -.5px; text-decoration: none; }
+    .nav-links { display: flex; gap: 8px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 6px; font-size: .875rem; font-weight: 600; text-decoration: none; cursor: pointer; border: none; transition: opacity .15s; }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: var(--accent); color: #0d1117; }
+    .btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border); }
+    .btn-lg { padding: 12px 28px; font-size: 1rem; border-radius: 8px; }
+
+    /* HERO */
+    .hero { text-align: center; padding: 80px 24px 56px; max-width: 900px; margin: 0 auto; }
+    .badge { display: inline-block; background: rgba(88,166,255,.12); border: 1px solid rgba(88,166,255,.3); color: var(--accent); font-size: .75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: .4px; margin-bottom: 20px; text-transform: uppercase; }
+    h1 { font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 800; line-height: 1.15; letter-spacing: -.5px; margin-bottom: 20px; }
+    h1 span { color: var(--accent); }
+    .hero-sub { font-size: 1.125rem; color: var(--muted); max-width: 640px; margin: 0 auto 36px; }
+    .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .note { font-size: .8rem; color: var(--muted); }
+
+    /* SCREENSHOT */
+    .screenshot-wrap { max-width: 1100px; margin: 0 auto 80px; padding: 0 24px; }
+    .screenshot-wrap img { width: 100%; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 24px 80px rgba(0,0,0,.6); }
+
+    /* PILLS */
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 900px; margin: 0 auto 80px; padding: 0 24px; }
+    .pill { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: .8rem; color: var(--muted); }
+
+    /* FEATURES */
+    .features { max-width: 1100px; margin: 0 auto 80px; padding: 0 24px; }
+    .section-label { text-align: center; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
+    h2 { text-align: center; font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; margin-bottom: 48px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
+    .card-icon { font-size: 1.75rem; margin-bottom: 12px; }
+    .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+    .card p { font-size: .875rem; color: var(--muted); }
+
+    /* HOW IT WORKS */
+    .how { max-width: 700px; margin: 0 auto 80px; padding: 0 24px; text-align: center; }
+    .steps { display: flex; flex-direction: column; gap: 20px; margin-top: 40px; text-align: left; }
+    .step { display: flex; gap: 20px; align-items: flex-start; }
+    .step-num { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: rgba(88,166,255,.15); border: 1px solid rgba(88,166,255,.3); color: var(--accent); font-weight: 700; font-size: .875rem; display: flex; align-items: center; justify-content: center; }
+    .step-text h4 { font-size: .9375rem; font-weight: 600; margin-bottom: 4px; }
+    .step-text p { font-size: .875rem; color: var(--muted); }
+    code { background: rgba(255,255,255,.07); border-radius: 4px; padding: 1px 6px; font-size: .85em; font-family: "Cascadia Code", "Fira Code", monospace; }
+
+    /* COMPARE */
+    .compare { max-width: 800px; margin: 0 auto 80px; padding: 0 24px; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    th { text-align: left; font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+    td { padding: 10px 14px; border-bottom: 1px solid rgba(48,54,61,.5); }
+    .yes { color: var(--accent2); font-weight: 600; }
+    .no { color: var(--muted); }
+    .partial { color: #e3b341; }
+
+    /* CTA BANNER */
+    .cta-banner { background: linear-gradient(135deg, rgba(88,166,255,.12), rgba(63,185,80,.08)); border: 1px solid rgba(88,166,255,.2); border-radius: 16px; max-width: 800px; margin: 0 auto 80px; padding: 56px 32px; text-align: center; }
+    .cta-banner h2 { font-size: 1.875rem; margin-bottom: 12px; }
+    .cta-banner p { color: var(--muted); margin-bottom: 28px; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; color: var(--muted); font-size: .8125rem; }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="#">NovaPlan</a>
+  <div class="nav-links">
+    <a class="btn btn-secondary" href="https://github.com/aravindksk7/NovaPlan">GitHub</a>
+    <a class="btn btn-primary" href="NovaPlan.html">Launch App</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="badge">Free &amp; Open Source · Zero Install</div>
+  <h1>Project planning that<br><span>just works</span> — in one file</h1>
+  <p class="hero-sub">NovaPlan is a complete project management tool packed into a single HTML file. Gantt chart, WBS, critical path, Kanban, sprints, and more — no sign-up, no server, runs offline.</p>
+  <div class="cta-row">
+    <a class="btn btn-primary btn-lg" href="NovaPlan.html">🚀 Launch Free App</a>
+    <a class="btn btn-secondary btn-lg" href="https://github.com/aravindksk7/NovaPlan/raw/main/NovaPlan.html" download>⬇ Download HTML File</a>
+  </div>
+  <p class="note">One click. No install. Runs in Chrome, Firefox, Edge, or Safari.</p>
+</section>
+
+<div class="screenshot-wrap">
+  <img src="screenshot.png" alt="NovaPlan project planner showing WBS grid and interactive Gantt chart with an Agile Sprint Plan template loaded" width="1440" height="900" loading="lazy" />
+</div>
+
+<div class="pills">
+  <span class="pill">🗓 Gantt Chart</span>
+  <span class="pill">📊 Work Breakdown Structure</span>
+  <span class="pill">🔴 Critical Path (CPM)</span>
+  <span class="pill">📋 Kanban Board</span>
+  <span class="pill">🏃 Sprint Planning</span>
+  <span class="pill">⚠️ RAID Log</span>
+  <span class="pill">👥 Resource Workload</span>
+  <span class="pill">📤 Excel Export</span>
+  <span class="pill">🎞 Animated GIF</span>
+  <span class="pill">📥 Jira CSV Import</span>
+  <span class="pill">🗄 MS Project XML</span>
+  <span class="pill">🌙 Dark / Light Theme</span>
+  <span class="pill">💾 Offline First</span>
+  <span class="pill">🔒 Your data never leaves your device</span>
+</div>
+
+<section class="features">
+  <p class="section-label">Everything you need</p>
+  <h2>Full project governance in one file</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="card-icon">📅</div>
+      <h3>Interactive Gantt Chart</h3>
+      <p>Colour-coded bars, dependency arrows, progress fills, baseline tracks, milestones, and 8 zoom levels (25%–400%). Hand-built SVG renderer — no third-party charting library.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔢</div>
+      <h3>Work Breakdown Structure</h3>
+      <p>Unlimited task nesting with automatic roll-up of dates, hours, and progress to parent (summary) rows. WBS codes (1.2.3) used in dependency syntax.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔴</div>
+      <h3>Critical Path Method</h3>
+      <p>Automatic forward/backward pass with total-float calculation, critical and near-critical flagging, and dependency types FS, SS, FF, SF with lead/lag.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🏃</div>
+      <h3>Sprint Planning</h3>
+      <p>Create sprints, assign tasks, use Kanban drag-and-drop, and filter by Current Sprint. Sprint view shows total hours and team size per sprint.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h3>8 Views</h3>
+      <p>Split, Grid, Gantt, Board (Kanban), Sprint, Dashboard, Workload, and RAID. Saved Views let you bookmark your favourite mode + filter + grouping combination.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📤</div>
+      <h3>Import / Export</h3>
+      <p>SQL backup, CSV, Jira CSV, MS Project XML, multi-sheet Excel (7 sheets), and animated Gantt GIF. Import CSV or SQL to restore or migrate plans.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">💾</div>
+      <h3>Offline-First Storage</h3>
+      <p>Auto-selects OPFS → IndexedDB → localStorage. Your data is stored locally and never uploaded. Works with <code>file://</code>, localhost, or any static host.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚠️</div>
+      <h3>RAID Log &amp; Change Log</h3>
+      <p>Track Risks, Assumptions, Issues, Dependencies, and Decisions. Every entry is timestamped and exported to Excel. Change log gives you a full audit trail.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔀</div>
+      <h3>Scenarios</h3>
+      <p>Snapshot your current plan before making changes, then compare any two scenarios side by side to see how many tasks shifted and by how much.</p>
+    </div>
+  </div>
+</section>
+
+<section class="how">
+  <p class="section-label">Get started in 30 seconds</p>
+  <h2>No setup. Just open and plan.</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        <h4>Download or open the app</h4>
+        <p>Click <strong>Launch Free App</strong> above, or download <code>NovaPlan.html</code> and open it by double-clicking. No install, no build step.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        <h4>Load a template or start fresh</h4>
+        <p>Click <code>Load Template…</code> → <strong>Agile Sprint Plan</strong> to see a fully wired example with 9 tasks, dependencies, and Gantt bars — or click <strong>New Task</strong> to start blank.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        <h4>Click any cell to edit</h4>
+        <p>Dates, types, resources, status, and progress are all inline-editable. The Gantt chart updates in real time as you edit.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        <h4>Export when you're done</h4>
+        <p>Download a multi-sheet <strong>Excel workbook</strong>, a Jira-ready CSV, an MS Project XML, or an <strong>animated Gantt GIF</strong> for presentations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="compare">
+  <p class="section-label">Why NovaPlan</p>
+  <h2>Versus the alternatives</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>NovaPlan</th>
+        <th>MS Project</th>
+        <th>Jira</th>
+        <th>Trello</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Cost</td><td class="yes">Free</td><td class="no">$10+/mo</td><td class="no">$8+/mo</td><td class="partial">Free tier</td></tr>
+      <tr><td>Zero install</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr><td>Offline / file-based</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+      <tr><td>Gantt chart</td><td class="yes">✓</td><td class="yes">✓</td><td class="partial">Add-on</td><td class="no">✗</td></tr>
+      <tr><td>Critical Path (CPM)</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+      <tr><td>WBS hierarchy</td><td class="yes">✓</td><td class="yes">✓</td><td class="partial">Epics only</td><td class="no">✗</td></tr>
+      <tr><td>Kanban board</td><td class="yes">✓</td><td class="no">✗</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      <tr><td>Sprint planning</td><td class="yes">✓</td><td class="no">✗</td><td class="yes">✓</td><td class="partial">Power-Up</td></tr>
+      <tr><td>Data privacy (local)</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+      <tr><td>Single file</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="cta-banner">
+  <h2>Ready to plan your next project?</h2>
+  <p>Free forever. No account. No data leaves your browser.</p>
+  <div class="cta-row">
+    <a class="btn btn-primary btn-lg" href="NovaPlan.html">🚀 Launch NovaPlan</a>
+    <a class="btn btn-secondary btn-lg" href="https://github.com/aravindksk7/NovaPlan">⭐ Star on GitHub</a>
+  </div>
+</section>
+
+<footer>
+  <p>
+    <strong>NovaPlan</strong> — released under the <a href="https://github.com/aravindksk7/NovaPlan/blob/main/LICENSE">MIT License</a>.
+    Built by <a href="https://github.com/aravindksk7">AK</a>.
+    <a href="https://github.com/aravindksk7/NovaPlan">GitHub Repository</a>.
+  </p>
+  <p style="margin-top:8px">Keywords: project planner · gantt chart · kanban · WBS · critical path · sprint planning · offline · single file · free project management tool</p>
+</footer>
+
+</body>
+</html>

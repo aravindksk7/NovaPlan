@@ -1,12 +1,20 @@
-# NovaPlan
+# NovaPlan — Free Single-File Project Planner
 
-**A complete, single-file project planner that runs entirely in your browser.**
+[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Single File](https://img.shields.io/badge/single%20file-HTML-orange)](#quick-start)
+[![No Build Step](https://img.shields.io/badge/build%20step-none-brightgreen)](#quick-start)
+[![Offline First](https://img.shields.io/badge/offline-first-blue)](#storage-and-your-data)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-blueviolet)](https://aravindksk7.github.io/NovaPlan/)
 
-NovaPlan is a zero-install, offline-first project management tool packed into one HTML file. There is no sign-up, no server, and no internet connection required after the first load. Your data is stored locally in your browser and never leaves your device.
+**A complete project management tool packed into one HTML file — Gantt chart, WBS, critical path, Kanban board, sprint planning, RAID log, and more.**
+
+NovaPlan is a zero-install, offline-first project planner. No sign-up, no server, no internet connection required after the first load. Your data is stored locally in your browser and never leaves your device.
 
 Use it to plan projects, track tasks and subtasks, manage sprints, visualise timelines on an interactive Gantt chart, run critical-path analysis, balance resource workload, track risks, and share progress as Excel or animated GIF exports.
 
-![NovaPlan screenshot](Novaplan.jpg)
+**[🚀 Launch App](https://aravindksk7.github.io/NovaPlan/NovaPlan.html) · [⬇ Download HTML](https://raw.githubusercontent.com/aravindksk7/NovaPlan/main/NovaPlan.html) · [🌐 Project Page](https://aravindksk7.github.io/NovaPlan/)**
+
+![NovaPlan — WBS grid and interactive Gantt chart showing an Agile Sprint Plan](screenshot.png)
 
 ---
 
