@@ -151,12 +151,10 @@
     }
     .menu { position: relative; z-index: 100; }
     .menu-panel {
-      position: absolute;
-      right: 0;
-      top: 38px;
+      position: fixed;
       min-width: 180px;
       max-height: 80vh;
-      z-index: 1000;
+      z-index: 9999;
       display: none;
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -769,12 +767,22 @@
     }
 
     /* Glassmorphism Refinements */
-    .context-menu, .gantt-tooltip, .modal-box, #export-menu, #tools-menu {
+    /* backdrop-filter must NOT be on #export-menu / #tools-menu — it would create a containing
+       block for their position:fixed .menu-panel children, misplacing the dropdown */
+    .context-menu, .gantt-tooltip, .modal-box {
       backdrop-filter: blur(12px) !important;
       -webkit-backdrop-filter: blur(12px) !important;
       background: color-mix(in srgb, var(--bg-elevated) 78%, transparent) !important;
     }
-    body.light .context-menu, body.light .gantt-tooltip, body.light .modal-box, body.light #export-menu, body.light #tools-menu {
+    .menu-panel {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--bg-elevated) 78%, transparent) !important;
+    }
+    body.light .context-menu, body.light .gantt-tooltip, body.light .modal-box {
+      background: color-mix(in srgb, var(--bg-elevated) 85%, transparent) !important;
+    }
+    body.light .menu-panel {
       background: color-mix(in srgb, var(--bg-elevated) 85%, transparent) !important;
     }
 
@@ -1130,7 +1138,7 @@
           <tr><td><code>Filter</code></td><td>Shows a subset of tasks — e.g. only Slipped, only Milestones, only Critical Path tasks (see Filtering section).</td></tr>
           <tr><td><code>Group By</code></td><td>Re-orders and groups rows by Status, Sprint, Resource, Priority, Task Type, or Slippage.</td></tr>
           <tr><td><code>Export</code></td><td>Downloads your plan in SQL, CSV, Jira CSV, Project XML, Excel, or Gantt GIF format.</td></tr>
-          <tr><td><code>Tools</code></td><td>Advanced features: All 17 tools now accessible regardless of view — Calendar, Choose Columns, Baselines, Sprints, Saved Views, Scenarios, RAID, Change Log, Custom Fields, Conditional Formatting, Integrations, Gantt Labels, Gantt Lines, and Reset Data. The Tools menu dropdown appears above all other UI elements for easy access.</td></tr>
+          <tr><td><code>Tools</code></td><td>Advanced features: Calendar, Choose Columns, Baselines, Sprints, Saved Views, Scenarios, RAID, Change Log, Custom Fields, Conditional Formatting, Integrations, Gantt Labels, Gantt Lines, and Reset Data. The dropdown overlays the WBS grid and Gantt timeline and smart-positions itself so it is always fully visible, even when the toolbar wraps to a second row on narrower screens.</td></tr>
           <tr><td><code>Saved Views</code></td><td>Pre-set view configurations (mode + filter + grouping). Six defaults included; save your own via <code>Tools &gt; Save View</code>.</td></tr>
           <tr><td><code>Import SQL/CSV</code></td><td>Loads tasks from a CSV file or restores a full database from a previously exported SQL file.</td></tr>
           <tr><td><code>Help</code></td><td>Opens this dialog.</td></tr>
@@ -1219,11 +1227,12 @@
           <li><strong>Narrow Screens (&lt;1280px)</strong> — Horizontal scrollbar appears as a fallback, with no hidden elements</li>
         </ul>
         <p style="margin-top:6px">Critical UI elements (Help button, Theme switcher, Storage status) are protected with <code>flex-shrink: 0</code> to prevent compression or overlap.</p>
-        <h4>Improved Tools Menu</h4>
+        <h4>Tools Menu Dropdown</h4>
         <ul class="help-steps">
-          <li><strong>All 17 menu items</strong> now visible regardless of current view mode</li>
-          <li><strong>Proper z-index layering</strong> — Menu dropdown appears above Gantt timeline and all other content</li>
-          <li><strong>Always accessible</strong> — No more hidden options or view-dependent limitations</li>
+          <li><strong>All 17 menu items</strong> visible regardless of current view mode</li>
+          <li><strong>Overlays all content</strong> — The panel uses <code>position: fixed</code> so it always appears above the WBS grid, Gantt timeline, and every other element on the page</li>
+          <li><strong>Smart placement</strong> — Automatically left- or right-aligns based on where the Tools button sits on screen, so the panel stays fully within the viewport even when the toolbar wraps to a second row at narrower widths</li>
+          <li><strong>Always accessible</strong> — No view-dependent limitations, no hidden items</li>
         </ul>
         <div class="help-tip">💡 <strong>Accessibility:</strong> All UX improvements maintain keyboard navigation, screen reader compatibility, and touch-friendly interactions across devices.</div>
       </section>
@@ -6670,9 +6679,33 @@
       el.bulkDelete.setAttribute("aria-disabled", String(disabled));
     }
 
+    function positionMenuPanel(menuEl, btnEl) {
+      const panel = menuEl.querySelector(".menu-panel");
+      const btnRect = btnEl.getBoundingClientRect();
+      const panelWidth = panel.offsetWidth || 180;
+      const vw = window.innerWidth;
+      const margin = 4;
+
+      // Right-align when button is in the right half of the viewport (panel hangs left),
+      // left-align when button is in the left half (panel hangs right).
+      // This keeps the panel near the button and within the viewport at all wrap breakpoints.
+      const btnCenterX = (btnRect.left + btnRect.right) / 2;
+      let left = btnCenterX > vw / 2
+        ? btnRect.right - panelWidth   // right half → right-align
+        : btnRect.left;                // left half  → left-align
+
+      // Clamp to viewport with a small margin
+      left = Math.max(margin, Math.min(left, vw - panelWidth - margin));
+
+      panel.style.top = (btnRect.bottom + 4) + "px";
+      panel.style.left = left + "px";
+      panel.style.right = "auto";
+    }
+
     function toggleExportMenu() {
       const open = el.exportMenu.classList.toggle("open");
       el.exportMenuBtn.setAttribute("aria-expanded", String(open));
+      if (open) positionMenuPanel(el.exportMenu, el.exportMenuBtn);
     }
 
     function closeExportMenu() {
@@ -6683,6 +6716,7 @@
     function toggleToolsMenu() {
       const open = el.toolsMenu.classList.toggle("open");
       el.toolsMenuBtn.setAttribute("aria-expanded", String(open));
+      if (open) positionMenuPanel(el.toolsMenu, el.toolsMenuBtn);
     }
 
     function closeToolsMenu() {

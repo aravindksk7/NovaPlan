@@ -37,46 +37,25 @@ That's it — no build step, no dependencies to install. The entire application 
 - **Dark / light theme** — toggle and remember your preference.
 - **Import / Export** — SQL (full backup), CSV, Jira CSV, MS Project XML, multi-sheet Excel, and Gantt GIF.
 - **Local-first storage** — OPFS → IndexedDB → localStorage, chosen automatically; nothing is ever uploaded.
-- **Professional UX polish** — scrollable modals with sticky headers/footers, responsive toolbar with flex-wrap, improved Tools menu visibility (all 17 items accessible), and proper z-index layering for dropdowns.
+- **Professional UX polish** — scrollable modals with sticky headers/footers, responsive toolbar with flex-wrap, Tools menu dropdown overlays all content and smart-positions itself to stay within the viewport at any screen width.
 
 ---
 
 ## Recent Improvements (June 2026)
 
-### UX Polish Upgrades
+### Tools Dropdown Overlay — Fixed
 
-Four major UX enhancements have been implemented to improve usability across all screen sizes and viewport configurations:
+The Tools menu dropdown now correctly overlays the Work Breakdown Structure grid and Gantt timeline at all viewport sizes:
 
-1. **Scrollable Modals with Sticky Footer** ✅
-   - All modal dialogs now feature sticky headers and footers
-   - Long forms scroll smoothly within the modal body
-   - OK/Cancel buttons remain visible and accessible at all times
-   - Custom themed scrollbar for dark/light mode
-   - Responsive design adapts to any viewport height
+- **Proper overlay** — The panel uses `position: fixed` with `z-index: 9999`, escaping the topbar's `overflow-x: auto` clipping context that previously hid the dropdown
+- **Glassmorphism fix** — `backdrop-filter` moved from the menu container onto the panel itself; a `backdrop-filter` on a container element creates a CSS containing block that mis-positioned the fixed-position panel
+- **Smart positioning** — When the toolbar wraps and the Tools button lands on the left half of the viewport, the panel left-aligns with the button and opens to the right. When the button is on the right half, it right-aligns. Both paths clamp to viewport bounds, so the panel is always fully visible regardless of screen width
+- **All 17 items accessible** — Visibility logic unchanged; Gantt-specific items (Gantt Labels, Gantt Lines) are hidden only in non-Gantt views
 
-2. **Responsive Topbar with Flex-Wrap** ✅
-   - Toolbar adapts intelligently to screen width
-   - Elements wrap to second row on medium screens (1280-1440px)
-   - Horizontal scroll fallback on narrow screens
-   - All controls remain accessible with no hidden elements
-   - Critical elements (Help, Theme switcher, Status) protected from compression
+### Earlier UX Polish
 
-3. **Improved Tools Menu Visibility** ✅
-   - All 17 Tools menu items now visible regardless of view mode
-   - Previously only 3 items were shown in some views
-   - Simplified visibility logic shows 14-15 items by default
-   - Only Gantt-specific items hidden in non-Gantt views
-
-4. **Fixed Z-Index Layering** ✅
-   - Tools menu dropdown now appears above Gantt timeline
-   - Proper stacking hierarchy: Context Menu (1000) → Menu Panel (100) → Topbar (50) → Gantt Tooltip (40)
-   - No more hidden dropdowns behind timeline elements
-
-**Documentation:**
-- [Tools Menu Fix Report](TOOLS_MENU_FIX_REPORT.md)
-- [Z-Index Fix Report](Z_INDEX_FIX_REPORT.md)
-- [Scrollable Modals Documentation](SCROLLABLE_MODALS_UPGRADE.md)
-- [Topbar Overflow Fix](TOPBAR_OVERFLOW_FIX.md)
+- **Scrollable modals with sticky header/footer** — Long forms scroll within the modal; OK/Cancel buttons remain pinned and visible at all times
+- **Responsive toolbar** — Flex-wrap layout adapts to any screen width; all controls accessible with no hidden elements
 
 ---
 
