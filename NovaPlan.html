@@ -5864,9 +5864,9 @@
         el.importBtn.addEventListener("click", () => el.importFile.click());
         el.importFile.addEventListener("change", event => this.handleImport(event));
         el.helpBtn.addEventListener("click", () => showHelpDialog());
-        el.exportMenuBtn.addEventListener("click", () => toggleExportMenu());
+        el.exportMenuBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleExportMenu(); });
         el.exportMenu.addEventListener("click", event => this.handleExportClick(event));
-        el.toolsMenuBtn.addEventListener("click", () => toggleToolsMenu());
+        el.toolsMenuBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleToolsMenu(); });
         el.toolsMenu.addEventListener("click", event => this.handleToolClick(event));
         el.viewSelect.addEventListener("change", () => this.handleViewChange());
         el.filterSelect.addEventListener("change", () => this.handleViewChange());
