@@ -1,0 +1,13 @@
+{
+  "name": "novaplan",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NovaPlan browser-based project planning app.",
+  "license": "MIT",
+  "scripts": {
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0"
+  }
+}
