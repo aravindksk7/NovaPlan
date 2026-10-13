@@ -105,7 +105,7 @@ The full in-app help is reproduced below so you can read it without opening the 
 | `Export` | Downloads your plan in SQL, CSV, Jira CSV, Project XML, Excel, or Gantt GIF format. |
 | `Tools` | Advanced features: Calendar settings, Choose Columns, Baselines, Sprint management, Saved views, Scenarios, RAID items, Change logging, Reset data. |
 | `Saved Views` | Pre-set view configurations (mode + filter + grouping). Six defaults included; save your own via `Tools > Save View`. |
-| `Import SQL/CSV` | Loads tasks from a CSV file or restores a full database from a previously exported SQL file. |
+| `Import SQL/CSV/Excel` | Loads tasks from a CSV file or Excel workbook, or restores a full database from a previously exported SQL file. |
 | `Help` | Opens the in-app help dialog. |
 | 🌙 / ☀️ | Toggles between dark and light theme. Your preference is remembered. |
 
@@ -438,11 +438,12 @@ The `Selection` checkbox, `Task Name`, and `Actions` columns are always shown. Y
 
 ## Importing Data
 
-**From CSV** — click `Import SQL/CSV` and select a `.csv` file. NovaPlan recognises many column-name variations:
+**From CSV** — click `Import SQL/CSV/Excel` and select a `.csv` file. NovaPlan recognises many column-name variations:
 
 | Field | Accepted CSV column names |
 |---|---|
 | Task name | Task Name, Title, Summary, Name |
+| Task type | Type, Task Type, Issue Type, task_type (icon and/or label, e.g. `🐛 Bug` or `Bug`) |
 | Start date | Planned Start Date, Start Date, Start, start_date |
 | End date | Planned End Date, Due Date, Finish, End, end_date |
 | Progress | % Complete, Progress, progress |
@@ -452,6 +453,13 @@ The `Selection` checkbox, `Task Name`, and `Actions` columns are always shown. Y
 | Milestone | Milestone, is_milestone (yes/true/1) |
 
 CSV import **appends** rows to your existing plan. WBS codes are assigned automatically if missing.
+
+**From Excel** — select an `.xlsx` file. Tasks are read from the `Tasks` sheet (or the first sheet), using the same column names as CSV. Excel import also **appends**, and additionally restores:
+
+- **Outline** — a row whose `Parent WBS` matches another row's `WBS` becomes its subtask.
+- **Dependencies** — from a `Dependencies` sheet with `Successor WBS`, `Predecessor WBS`, `Type` and `Lag Hours` columns.
+
+A workbook made with `Export Excel` can be imported back as-is. Imported tasks are renumbered to follow your existing plan, and dates are kept as written. Other sheets (RAID, Change Log, Summary…) are ignored.
 
 **From SQL (full restore)** — select a `.sql` file previously exported from NovaPlan. This **replaces** your entire database (tasks, sprints, baselines, RAID items, change logs).
 

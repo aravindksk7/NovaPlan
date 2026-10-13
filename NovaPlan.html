@@ -1094,11 +1094,11 @@
       <select id="saved-view-select" disabled aria-label="Saved view">
         <option value="">Saved Views</option>
       </select>
-      <button id="import-btn" disabled>Import SQL/CSV</button>
+      <button id="import-btn" disabled>Import SQL/CSV/Excel</button>
       <button id="help-btn" class="help-link" type="button" disabled>Help</button>
       <button id="theme-toggle-btn" type="button" title="Switch to light theme" style="font-size:16px;padding:0 8px">🌙</button>
       <a class="creator-link" href="https://github.com/aravindksk7" target="_blank" rel="noopener">Created by AK</a>
-      <input id="import-file" class="file-input" type="file" accept=".sql,.csv" />
+      <input id="import-file" class="file-input" type="file" accept=".sql,.csv,.xlsx" />
       <div class="spacer"></div>
       <div id="storage-status" class="status">Initializing</div>
     </nav>
@@ -1174,7 +1174,7 @@
           <tr><td><code>Export</code></td><td>Downloads your plan in SQL, CSV, Jira CSV, Project XML, Excel, or Gantt GIF format.</td></tr>
           <tr><td><code>Tools</code></td><td>Advanced features: Calendar, Choose Columns, Baselines, Sprints, Saved Views, Scenarios, RAID, Change Log, Custom Fields, Conditional Formatting, Integrations, Gantt Labels, Gantt Lines, and Reset Data. The dropdown overlays the WBS grid and Gantt timeline and smart-positions itself so it is always fully visible, even when the toolbar wraps to a second row on narrower screens.</td></tr>
           <tr><td><code>Saved Views</code></td><td>Pre-set view configurations (mode + filter + grouping). Six defaults included; save your own via <code>Tools &gt; Save View</code>.</td></tr>
-          <tr><td><code>Import SQL/CSV</code></td><td>Loads tasks from a CSV file or restores a full database from a previously exported SQL file.</td></tr>
+          <tr><td><code>Import SQL/CSV/Excel</code></td><td>Loads tasks from a CSV file or Excel workbook, or restores a full database from a previously exported SQL file.</td></tr>
           <tr><td><code>Help</code></td><td>Opens this dialog.</td></tr>
           <tr><td>🌙 / ☀️</td><td>Toggles between dark and light theme. Your preference is remembered.</td></tr>
         </table>
@@ -1585,10 +1585,11 @@
       <section>
         <h3>Importing Data</h3>
         <h4>From CSV</h4>
-        <p>Click <code>Import SQL/CSV</code> and select a <code>.csv</code> file. NovaPlan recognises many column name variations:</p>
+        <p>Click <code>Import SQL/CSV/Excel</code> and select a <code>.csv</code> file. NovaPlan recognises many column name variations:</p>
         <table>
           <tr><th>Field</th><th>Accepted CSV column names</th></tr>
           <tr><td>Task name</td><td>Task Name, Title, Summary, Name</td></tr>
+          <tr><td>Task type</td><td>Type, Task Type, Issue Type, task_type (icon and/or label, e.g. <code>🐛 Bug</code> or <code>Bug</code>)</td></tr>
           <tr><td>Start date</td><td>Planned Start Date, Start Date, Start, start_date</td></tr>
           <tr><td>End date</td><td>Planned End Date, Due Date, Finish, End, end_date</td></tr>
           <tr><td>Progress</td><td>% Complete, Progress, progress</td></tr>
@@ -1598,8 +1599,15 @@
           <tr><td>Milestone</td><td>Milestone, is_milestone (yes/true/1)</td></tr>
         </table>
         <p style="margin-top:6px">CSV import <strong>appends</strong> rows to your existing plan. WBS codes are assigned automatically if missing.</p>
+        <h4>From Excel</h4>
+        <p>Click <code>Import SQL/CSV/Excel</code> and select an <code>.xlsx</code> file. Tasks are read from the <code>Tasks</code> sheet (or the first sheet), using the same column names as CSV. Excel import also <strong>appends</strong>, and additionally restores:</p>
+        <ul>
+          <li><strong>Outline</strong> — a row whose <code>Parent WBS</code> matches another row's <code>WBS</code> becomes its subtask.</li>
+          <li><strong>Dependencies</strong> — from a <code>Dependencies</code> sheet with <code>Successor WBS</code>, <code>Predecessor WBS</code>, <code>Type</code> and <code>Lag Hours</code> columns.</li>
+        </ul>
+        <p style="margin-top:6px">A workbook made with <code>Export Excel</code> can be imported back as-is. Imported tasks are renumbered to follow your existing plan, and dates are kept as written. Other sheets (RAID, Change Log, Summary…) are ignored.</p>
         <h4>From SQL (full restore)</h4>
-        <p>Click <code>Import SQL/CSV</code> and select a <code>.sql</code> file previously exported from NovaPlan. This <strong>replaces</strong> your entire database. All tasks, sprints, baselines, RAID items, and change logs are restored.</p>
+        <p>Click <code>Import SQL/CSV/Excel</code> and select a <code>.sql</code> file previously exported from NovaPlan. This <strong>replaces</strong> your entire database. All tasks, sprints, baselines, RAID items, and change logs are restored.</p>
         <div class="help-warn">⚠️ SQL import is a full replacement. Any unsaved current data will be lost. Export an SQL backup first if you need to preserve it.</div>
       </section>
 
@@ -1719,7 +1727,7 @@
     const SQL_JS_URL = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js";
     const SQL_WASM_PATH = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/";
     const XLSX_URL = "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
-    const GIFENC_URL = "https://esm.sh/gifenc";
+    const GIFENC_URL = "https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js";
     const ROW_HEIGHT = 38;
     const BAR_HEIGHT = 20;
     const BAR_PADDING_TOP = 9;
@@ -3509,60 +3517,119 @@
         const rows = parseCsv(csvText);
         if (!rows.length) throw new Error("CSV has no task rows");
         await this.transact(async () => {
-          const usedWbs = new Set(execRows(this.db, "SELECT wbs_code FROM tasks").map(row => row.wbs_code));
-          const nextRoot = () => {
-            const roots = [...usedWbs].map(code => Number(text(code).split(".")[0]) || 0);
-            const code = String((roots.length ? Math.max(...roots) : 0) + 1);
-            usedWbs.add(code);
-            return code;
-          };
-          const pick = (row, names, fallback = "") => {
-            for (const name of names) {
-              if (row[name] != null && row[name] !== "") return row[name];
-            }
-            return fallback;
-          };
-          for (const row of rows) {
-            const title = pick(row, ["Task Name", "Title", "Summary", "Name"]);
-            if (!title) continue;
-            let wbs = pick(row, ["WBS", "wbs_code"]);
-            if (!wbs || usedWbs.has(wbs)) wbs = nextRoot();
-            else usedWbs.add(wbs);
-            const start = pick(row, ["Planned Start Date", "Start Date", "Start", "start_date"], todayIso());
-            const end = pick(row, ["Planned End Date", "Due Date", "Finish", "End", "end_date"], start);
-            if (!isValidIsoDate(start) || !isValidIsoDate(end) || end < start) throw new Error(`Invalid date range in CSV row ${title}`);
-            const progress = clamp(Number(pick(row, ["% Complete", "Progress", "progress"], 0)) || 0, 0, 100);
-            const duration = Number(pick(row, ["Duration Hours", "Original Estimate", "duration_hours"], plannedDateDurationHours({ start_date: start, end_date: end }))) || workingHoursPerDay();
-            const actual = Number(pick(row, ["Actual Hours", "actual_hours"], 0)) || 0;
-            const remaining = Number(pick(row, ["Remaining Hours", "Remaining Estimate", "remaining_hours"], Math.max(0, duration * (100 - progress) / 100))) || 0;
-            const jira = normalizeJiraUrl(pick(row, ["Jira Link", "Jira", "jira_url"], ""));
-            const status = TASK_STATUSES.includes(pick(row, ["Status", "status"])) ? pick(row, ["Status", "status"]) : statusForProgress(progress);
-            const priority = TASK_PRIORITIES.includes(pick(row, ["Priority", "priority"])) ? pick(row, ["Priority", "priority"]) : "Medium";
-            const rawColor = pick(row, ["Color", "color"], "");
-            const color = /^#[0-9a-fA-F]{6}$/.test(rawColor) ? rawColor : null;
-            const ganttLabel = pick(row, ["Gantt Text", "Gantt Label", "gantt_label"], "").slice(0, 120);
-            const rawGanttLabelPosition = pick(row, ["Gantt Text Position", "Gantt Label Position", "gantt_label_position"], "").trim().toLowerCase();
-            const ganttLabelPosition = GANTT_TASK_LABEL_POSITIONS.includes(rawGanttLabelPosition) ? rawGanttLabelPosition : "";
-            const rawGanttLabelAlign = String(pick(row, ["Gantt Text Align", "Gantt Label Align", "gantt_label_align"], "")).trim().toLowerCase();
-            const ganttLabelAlign = GANTT_LABEL_ALIGNS.includes(rawGanttLabelAlign) ? rawGanttLabelAlign : "";
-            const rawGanttLabelSize = String(pick(row, ["Gantt Text Size", "Gantt Label Size", "gantt_label_size"], "")).trim().toLowerCase();
-            const ganttLabelSize = Object.hasOwn(GANTT_LABEL_SIZES, rawGanttLabelSize) ? rawGanttLabelSize : "";
-            const labelFlag = names => {
-              const value = String(pick(row, names, "")).trim().toLowerCase();
-              return ["yes", "true", "1"].includes(value) ? "1" : ["no", "false", "0"].includes(value) ? "0" : "";
-            };
-            const ganttLabelBold = labelFlag(["Gantt Text Bold", "Gantt Label Bold", "gantt_label_bold"]);
-            const ganttLabelItalic = labelFlag(["Gantt Text Italic", "Gantt Label Italic", "gantt_label_italic"]) === "1" ? "1" : "";
-            const rawGanttLabelColor = pick(row, ["Gantt Text Color", "Gantt Label Color", "gantt_label_color"], "");
-            const ganttLabelColor = /^#[0-9a-fA-F]{6}$/.test(rawGanttLabelColor) ? rawGanttLabelColor : "";
-            const rawGanttLabelFont = pick(row, ["Gantt Text Font", "Gantt Label Font", "gantt_label_font"], "");
-            const ganttLabelFont = GANTT_LABEL_FONTS.find(font => font.value === rawGanttLabelFont || font.label.toLowerCase() === rawGanttLabelFont.toLowerCase())?.value || "";
-            this.db.run(
-              "INSERT INTO tasks (wbs_code, task_type, title, start_date, end_date, actual_start_date, actual_end_date, duration_hours, actual_hours, remaining_hours, progress, predecessor_ids, resource, comments, tags, jira_url, color, gantt_label, gantt_label_position, gantt_label_color, gantt_label_font, gantt_label_align, gantt_label_size, gantt_label_bold, gantt_label_italic, is_milestone, is_highlighted, parent_id, status, priority, sprint_id, manually_scheduled, constraint_type, constraint_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,0,NULL,NULL)",
-              [wbs, DEFAULT_TYPE, title, start, end, null, null, duration, actual, remaining, progress, "", pick(row, ["Resource", "Assignee", "resource"]), pick(row, ["Comments", "Description", "comments"]), pick(row, ["Tags", "Labels", "tags"]), jira, color, ganttLabel, ganttLabelPosition, ganttLabelColor, ganttLabelFont, ganttLabelAlign, ganttLabelSize, ganttLabelBold, ganttLabelItalic, /^yes|true|1$/i.test(pick(row, ["Milestone", "is_milestone"])), 0, null, status, priority]
-            );
-          }
+          this.insertImportedRows(rows);
         });
+      },
+      // Appends task rows plus the outline (Parent WBS) and links (Dependencies sheet) that tie them together.
+      async importExcel(taskRows, dependencyRows) {
+        await this.transact(async () => {
+          const imported = this.insertImportedRows(taskRows);
+          if (!imported.length) throw new Error("Workbook has no task rows");
+          const idByWbs = new Map(imported.filter(entry => entry.wbs).map(entry => [entry.wbs, entry.id]));
+          const parentOf = new Map();
+          for (const entry of imported) {
+            const parentId = idByWbs.get(entry.parentWbs);
+            if (parentId) parentOf.set(entry.id, parentId);
+          }
+          for (const [id, parentId] of parentOf) {
+            const seen = new Set([id]);
+            for (let up = parentId; up != null; up = parentOf.get(up)) {
+              if (seen.has(up)) throw new Error("Circular parent reference in workbook");
+              seen.add(up);
+            }
+            this.db.run("UPDATE tasks SET parent_id = ? WHERE id = ?", [parentId, id]);
+          }
+          const dependenciesBySuccessor = new Map();
+          for (const row of dependencyRows) {
+            const successorId = idByWbs.get(text(row["Successor WBS"]).trim());
+            const predecessorId = idByWbs.get(text(row["Predecessor WBS"]).trim());
+            if (!successorId || !predecessorId || successorId === predecessorId) continue;
+            const type = text(row.Type).trim().toUpperCase();
+            if (!dependenciesBySuccessor.has(successorId)) dependenciesBySuccessor.set(successorId, []);
+            dependenciesBySuccessor.get(successorId).push({
+              predecessor_id: predecessorId,
+              type: DEPENDENCY_TYPES.includes(type) ? type : "FS",
+              lag_hours: Number(row["Lag Hours"]) || 0
+            });
+          }
+          for (const [successorId, dependencies] of dependenciesBySuccessor) this.replaceDependencies(successorId, dependencies);
+          const rows = execRows(this.db, "SELECT * FROM tasks");
+          const tasks = rows.map(row => normalizeTask(row, rows));
+          for (const task of tasks.filter(task => dependenciesBySuccessor.has(task.id))) {
+            const cycle = WBSUtils.hasCircularDependency(task.id, splitCsv(task.predecessor_ids).map(Number), tasks);
+            if (cycle.circular) throw new Error(`Circular dependency: ${cycle.path}`);
+          }
+          // Park imported rows on codes that sort after the existing plan in workbook order; resequencing assigns the real ones.
+          imported.forEach((entry, index) => this.db.run("UPDATE tasks SET wbs_code = ? WHERE id = ?", [`1000000000.${index}`, entry.id]));
+          this.resequenceWbsInDb();
+        });
+      },
+      // Inserts one task per row that has a name. Returns [{ id, wbs, parentWbs }] with the WBS codes as written in the file.
+      insertImportedRows(rows) {
+        const imported = [];
+        const usedWbs = new Set(execRows(this.db, "SELECT wbs_code FROM tasks").map(row => row.wbs_code));
+        const nextRoot = () => {
+          const roots = [...usedWbs].map(code => Number(text(code).split(".")[0]) || 0);
+          const code = String((roots.length ? Math.max(...roots) : 0) + 1);
+          usedWbs.add(code);
+          return code;
+        };
+        const pick = (row, names, fallback = "") => {
+          for (const name of names) {
+            if (row[name] != null && row[name] !== "") return row[name];
+          }
+          return fallback;
+        };
+        for (const row of rows) {
+          const title = pick(row, ["Task Name", "Title", "Summary", "Name"]);
+          if (!title) continue;
+          const sourceWbs = pick(row, ["WBS", "wbs_code"]).trim();
+          let wbs = sourceWbs;
+          if (!wbs || usedWbs.has(wbs)) wbs = nextRoot();
+          else usedWbs.add(wbs);
+          const start = pick(row, ["Planned Start Date", "Start Date", "Start", "start_date"], todayIso());
+          const end = pick(row, ["Planned End Date", "Due Date", "Finish", "End", "end_date"], start);
+          if (!isValidIsoDate(start) || !isValidIsoDate(end) || end < start) throw new Error(`Invalid date range in CSV row ${title}`);
+          const progress = clamp(Number(pick(row, ["% Complete", "Progress", "progress"], 0)) || 0, 0, 100);
+          const duration = Number(pick(row, ["Duration Hours", "Original Estimate", "duration_hours"], plannedDateDurationHours({ start_date: start, end_date: end }))) || workingHoursPerDay();
+          const actual = Number(pick(row, ["Actual Hours", "actual_hours"], 0)) || 0;
+          const remaining = Number(pick(row, ["Remaining Hours", "Remaining Estimate", "remaining_hours"], Math.max(0, duration * (100 - progress) / 100))) || 0;
+          const jira = normalizeJiraUrl(pick(row, ["Jira Link", "Jira", "jira_url"], ""));
+          const status = TASK_STATUSES.includes(pick(row, ["Status", "status"])) ? pick(row, ["Status", "status"]) : statusForProgress(progress);
+          const priority = TASK_PRIORITIES.includes(pick(row, ["Priority", "priority"])) ? pick(row, ["Priority", "priority"]) : "Medium";
+          // Exports write "<icon> <label>"; accept that, the bare icon, or the bare label.
+          const rawType = String(pick(row, ["Type", "Task Type", "Issue Type", "task_type"], "")).trim();
+          const taskType = Object.keys(TaskTypes).find(type => rawType === type || rawType.startsWith(`${type} `) || TaskTypes[type].label.toLowerCase() === rawType.toLowerCase()) || DEFAULT_TYPE;
+          const rawColor = pick(row, ["Color", "color"], "");
+          const color = /^#[0-9a-fA-F]{6}$/.test(rawColor) ? rawColor : null;
+          const ganttLabel = pick(row, ["Gantt Text", "Gantt Label", "gantt_label"], "").slice(0, 120);
+          const rawGanttLabelPosition = pick(row, ["Gantt Text Position", "Gantt Label Position", "gantt_label_position"], "").trim().toLowerCase();
+          const ganttLabelPosition = GANTT_TASK_LABEL_POSITIONS.includes(rawGanttLabelPosition) ? rawGanttLabelPosition : "";
+          const rawGanttLabelAlign = String(pick(row, ["Gantt Text Align", "Gantt Label Align", "gantt_label_align"], "")).trim().toLowerCase();
+          const ganttLabelAlign = GANTT_LABEL_ALIGNS.includes(rawGanttLabelAlign) ? rawGanttLabelAlign : "";
+          const rawGanttLabelSize = String(pick(row, ["Gantt Text Size", "Gantt Label Size", "gantt_label_size"], "")).trim().toLowerCase();
+          const ganttLabelSize = Object.hasOwn(GANTT_LABEL_SIZES, rawGanttLabelSize) ? rawGanttLabelSize : "";
+          const labelFlag = names => {
+            const value = String(pick(row, names, "")).trim().toLowerCase();
+            return ["yes", "true", "1"].includes(value) ? "1" : ["no", "false", "0"].includes(value) ? "0" : "";
+          };
+          const ganttLabelBold = labelFlag(["Gantt Text Bold", "Gantt Label Bold", "gantt_label_bold"]);
+          const ganttLabelItalic = labelFlag(["Gantt Text Italic", "Gantt Label Italic", "gantt_label_italic"]) === "1" ? "1" : "";
+          const rawGanttLabelColor = pick(row, ["Gantt Text Color", "Gantt Label Color", "gantt_label_color"], "");
+          const ganttLabelColor = /^#[0-9a-fA-F]{6}$/.test(rawGanttLabelColor) ? rawGanttLabelColor : "";
+          const rawGanttLabelFont = pick(row, ["Gantt Text Font", "Gantt Label Font", "gantt_label_font"], "");
+          const ganttLabelFont = GANTT_LABEL_FONTS.find(font => font.value === rawGanttLabelFont || font.label.toLowerCase() === rawGanttLabelFont.toLowerCase())?.value || "";
+          this.db.run(
+            "INSERT INTO tasks (wbs_code, task_type, title, start_date, end_date, actual_start_date, actual_end_date, duration_hours, actual_hours, remaining_hours, progress, predecessor_ids, resource, comments, tags, jira_url, color, gantt_label, gantt_label_position, gantt_label_color, gantt_label_font, gantt_label_align, gantt_label_size, gantt_label_bold, gantt_label_italic, is_milestone, is_highlighted, parent_id, status, priority, sprint_id, manually_scheduled, constraint_type, constraint_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,0,NULL,NULL)",
+            [wbs, taskType, title, start, end, null, null, duration, actual, remaining, progress, "", pick(row, ["Resource", "Assignee", "resource"]), pick(row, ["Comments", "Description", "comments"]), pick(row, ["Tags", "Labels", "tags"]), jira, color, ganttLabel, ganttLabelPosition, ganttLabelColor, ganttLabelFont, ganttLabelAlign, ganttLabelSize, ganttLabelBold, ganttLabelItalic, /^yes|true|1$/i.test(pick(row, ["Milestone", "is_milestone"])), 0, null, status, priority]
+          );
+          imported.push({
+            id: Number(execOne(this.db, "SELECT last_insert_rowid() AS id").id),
+            wbs: sourceWbs,
+            parentWbs: pick(row, ["Parent WBS", "parent_wbs"]).trim()
+          });
+        }
+        return imported;
       },
       migrateImportedDb(db) {
         this.createAuxiliarySchema(db);
@@ -5240,6 +5307,15 @@
           setExporting(false);
         }
       },
+      // Returns the task and dependency sheets as rows of text; date cells become yyyy-mm-dd.
+      async readWorkbook(arrayBuffer) {
+        await this.loadXlsx();
+        const wb = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
+        const cellText = value => value instanceof Date ? value.toISOString().slice(0, 10) : text(value);
+        const rows = name => XLSX.utils.sheet_to_json(wb.Sheets[name] || {}, { defval: "", UTC: true })
+          .map(row => Object.fromEntries(Object.entries(row).map(([header, value]) => [header.trim(), cellText(value)])));
+        return { taskRows: rows(wb.Sheets.Tasks ? "Tasks" : wb.SheetNames[0]), dependencyRows: rows("Dependencies") };
+      },
       loadXlsx() {
         if (window.XLSX) return Promise.resolve();
         return new Promise((resolve, reject) => {
@@ -5481,8 +5557,9 @@
         const viewWidth = Math.min(960, el.ganttBody.clientWidth || 960);
         const height = Math.min(900, Math.max(220, state.gantt.svgHeight + HEADER_HEIGHT));
         const maxScroll = Math.max(0, state.gantt.svgWidth - viewWidth);
+        const frameCount = clamp(Math.ceil(state.gantt.svgWidth / 260), 8, 48);
         const scrolls = mode === "animated"
-          ? Array.from({ length: clamp(Math.ceil(state.gantt.svgWidth / 260), 8, 48) }, (_, i, arr) => Math.round(maxScroll * (i / (arr.length - 1 || 1))))
+          ? Array.from({ length: frameCount }, (_, i) => Math.round(maxScroll * (i / (frameCount - 1))))
           : [mode === "current" ? el.ganttBody.scrollLeft : 0];
         const frames = [];
         for (let i = 0; i < scrolls.length; i++) {
@@ -6525,12 +6602,14 @@
         event.target.value = "";
         if (!file) return;
         const lowerName = file.name.toLowerCase();
-        if (!lowerName.endsWith(".sql") && !lowerName.endsWith(".csv")) return showToast("Import file must be .sql or .csv", "error");
-        const isCsv = lowerName.endsWith(".csv");
+        const kind = ["sql", "csv", "xlsx"].find(extension => lowerName.endsWith(`.${extension}`));
+        if (!kind) return showToast("Import file must be .sql, .csv or .xlsx", "error");
         const confirmed = await showConfirmDialog({
-          title: isCsv ? "Import CSV" : "Import SQL",
-          body: isCsv
+          title: kind === "csv" ? "Import CSV" : kind === "xlsx" ? "Import Excel" : "Import SQL",
+          body: kind === "csv"
             ? "CSV import appends task rows to the current plan."
+            : kind === "xlsx"
+            ? "Excel import appends the workbook's tasks, with their outline and dependencies, to the current plan."
             : "Importing replaces the current database if validation succeeds. The current state will be restored if import fails.",
           buttons: [
             { label: "Cancel", value: false },
@@ -6540,8 +6619,11 @@
         if (!confirmed) return;
         setControlsEnabled(false);
         try {
-          if (isCsv) await state.storage.importCSV(await file.text());
-          else await state.storage.importSQL(await file.text());
+          if (kind === "csv") await state.storage.importCSV(await file.text());
+          else if (kind === "xlsx") {
+            const { taskRows, dependencyRows } = await ExportSystem.readWorkbook(await file.arrayBuffer());
+            await state.storage.importExcel(taskRows, dependencyRows);
+          } else await state.storage.importSQL(await file.text());
           state.selectedIds.clear();
           await this.refresh();
           showToast("Import successful", "success");
