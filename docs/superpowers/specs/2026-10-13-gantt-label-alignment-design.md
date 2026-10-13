@@ -42,7 +42,7 @@ Four new `tasks` columns. An empty value means "use the default".
 | `gantt_label_align` | `left`, `center`, `right` |
 | `gantt_label_size` | `s`, `m`, `l` |
 | `gantt_label_bold` | `1`, `0` (empty = automatic, see section 5) |
-| `gantt_label_italic` | `1`, `0` |
+| `gantt_label_italic` | `1` |
 
 `gantt_label_position` gains two values, `before` and `after`, in addition to
 `above`, `below`, `middle`.
@@ -135,14 +135,22 @@ Fit is not re-evaluated while dragging or resizing. The refresh after drop re-ru
 
 ### 4. Auto-contrast
 
-For text that ends up inside the bar with no custom colour, the fill is `#111111` or
-`#ffffff`, whichever has the higher WCAG contrast ratio against the bar's base colour
-(the same `color` value used to draw the bar, before the progress overlay darkens
-it). A custom `gantt_label_color` always wins. Outside text keeps
-`--text-primary`.
+For text that ends up inside the bar with no custom colour, the fill is `#111111`
+when the bar's base colour (the `color` value used to draw the bar, before the
+progress overlay darkens it) has a WCAG relative luminance above `0.35`, otherwise
+`#ffffff`. The threshold is deliberately biased towards white: the default blue,
+purple and red task colours and grey summary bars keep white text as today, and white
+stays readable over the darkened progress overlay. Only clearly light bars (yellow,
+green, cyan, orange, light grey) switch to dark text. A custom `gantt_label_color`
+always wins. Outside text keeps `--text-primary`.
 
 Implemented as a small pure helper `contrastTextColor(hex)`; a colour that is not
 `#rrggbb` returns `#ffffff`.
+
+The timeline text dialog currently stores `#e6edf3` as an explicit colour on every
+save, which would defeat this. The dialog now stores a colour only if the task
+already had one or the user changes the colour picker; otherwise it stores empty
+(automatic).
 
 ### 5. Font size, bold, italic
 
@@ -152,8 +160,12 @@ bold, `font-style: italic` when italic.
 Bold is tri-state so existing labels keep their look. `gantt_label_bold` empty means
 automatic: bold when the text sits inside the bar, normal otherwise, which is today's
 behaviour. `1` forces bold and `0` forces normal. Tasks without custom text always use
-automatic. The dialog shows Bold pressed when the effective value is bold and saves an
-explicit `1` or `0`. Italic has no automatic state: empty and `0` both mean off.
+automatic. The dialog shows Bold pressed when the effective value is bold. It stores
+`1` or `0` only once the user clicks Bold; until then the flag stays empty, so the
+button follows the chosen position. Italic has no automatic state: empty means off.
+
+A task with custom text and an empty alignment or size falls back to the global
+default alignment and size.
 
 Row height is unchanged. Large text above or below a bar can touch the neighbouring
 row; that is accepted.
@@ -166,8 +178,8 @@ row; that is accepted.
 - New Align row: Left, Center, Right. Same toggle-button pattern as Position. No
   button pressed means automatic; clicking the pressed button un-presses it. The row
   is disabled when Position is Before or After.
-- Style grid gains a Size select (Small, Medium, Large) and Bold / Italic toggle
-  buttons.
+- Style grid gains a Size select (Default, Small, Medium, Large) and Bold / Italic
+  toggle buttons.
 - The dialog result and `editTimelineText` carry `align`, `size`, `bold`, `italic`.
   Clear resets all label fields to empty.
 
