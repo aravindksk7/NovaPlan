@@ -6048,35 +6048,9 @@
       },
       async addRootTask() {
         try {
-          const date = todayIso();
-          const id = await state.storage.insertTask({
-            wbs_code: WBSUtils.nextRootCode(state.tasks),
-            task_type: DEFAULT_TYPE,
-            title: "New Task",
-            start_date: date,
-            end_date: date,
-            actual_start_date: null,
-            actual_end_date: null,
-            duration_hours: workingHoursPerDay(),
-            actual_hours: 0,
-            remaining_hours: workingHoursPerDay(),
-            progress: 0,
-            predecessor_ids: "",
-            resource: "",
-            comments: "",
-            tags: "",
-            jira_url: "",
-            color: "",
-            is_milestone: 0,
-            is_highlighted: 0,
-            parent_id: null,
-            status: "Not Started",
-            priority: "Medium",
-            sprint_id: null,
-            manually_scheduled: 0,
-            constraint_type: null,
-            constraint_date: null
-          });
+          const id = await state.storage.insertTask(newTaskFields({
+            wbs_code: WBSUtils.nextRootCode(state.tasks)
+          }));
           await this.refresh();
           this.editTaskTitle(id);
         } catch (error) {
@@ -6085,35 +6059,11 @@
       },
       async addChildTask(parent) {
         try {
-          const date = todayIso();
-          const id = await state.storage.insertTask({
+          const id = await state.storage.insertTask(newTaskFields({
             wbs_code: WBSUtils.nextChildCode(parent, state.tasks),
-            task_type: DEFAULT_TYPE,
-            title: "New Task",
-            start_date: date,
-            end_date: date,
-            actual_start_date: null,
-            actual_end_date: null,
-            duration_hours: workingHoursPerDay(),
-            actual_hours: 0,
-            remaining_hours: workingHoursPerDay(),
-            progress: 0,
-            predecessor_ids: "",
-            resource: "",
-            comments: "",
-            tags: "",
-            jira_url: "",
-            color: "",
-            is_milestone: 0,
-            is_highlighted: 0,
             parent_id: parent.id,
-            status: "Not Started",
-            priority: "Medium",
-            sprint_id: null,
-            manually_scheduled: 0,
-            constraint_type: null,
-            constraint_date: null
-          });
+            ...datesFromParent(parent)
+          }));
           await this.refresh();
           this.editTaskTitle(id);
         } catch (error) {
@@ -6702,6 +6652,44 @@
         }
       }
     };
+
+    function newTaskFields(overrides = {}) {
+      const date = todayIso();
+      return {
+        task_type: DEFAULT_TYPE,
+        title: "New Task",
+        start_date: date,
+        end_date: date,
+        actual_start_date: null,
+        actual_end_date: null,
+        duration_hours: workingHoursPerDay(),
+        actual_hours: 0,
+        remaining_hours: workingHoursPerDay(),
+        progress: 0,
+        predecessor_ids: "",
+        resource: "",
+        comments: "",
+        tags: "",
+        jira_url: "",
+        color: "",
+        is_milestone: 0,
+        is_highlighted: 0,
+        parent_id: null,
+        status: "Not Started",
+        priority: "Medium",
+        sprint_id: null,
+        manually_scheduled: 0,
+        constraint_type: null,
+        constraint_date: null,
+        ...overrides
+      };
+    }
+
+    function datesFromParent(parent) {
+      if (!parent || !isValidIsoDate(parent.start_date) || !isValidIsoDate(parent.end_date) || parent.end_date < parent.start_date) return {};
+      const hours = Math.max(1, workingDaysBetween(parent.start_date, parent.end_date)) * workingHoursPerDay();
+      return { start_date: parent.start_date, end_date: parent.end_date, duration_hours: hours, remaining_hours: hours };
+    }
 
     function findTask(id) {
       return state.tasks.find(t => t.id === id);
