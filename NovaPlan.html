@@ -3173,13 +3173,22 @@
         state.activeBaseline = baseline.meta;
         return applyCriticalPath(applySummaryRollups(sortTasksByWbs(rows.map(row => normalizeTask(row, rows, depsByTask, baseline.rows)))));
       },
+      insertTaskRow(fields) {
+        const columns = Object.keys(fields);
+        const params = columns.map(key => fields[key]);
+        const placeholders = columns.map(() => "?").join(",");
+        this.db.run(`INSERT INTO tasks (${columns.join(",")}) VALUES (${placeholders})`, params);
+        return Number(execOne(this.db, "SELECT last_insert_rowid() AS id").id);
+      },
       async insertTask(fields) {
+        return this.transact(async () => this.insertTaskRow(fields));
+      },
+      // Inserts a sibling of anchorId directly "above" or "below" it and renumbers WBS codes.
+      async insertTaskAt(fields, anchorId, position) {
         return this.transact(async () => {
-          const columns = Object.keys(fields);
-          const params = columns.map(key => fields[key]);
-          const placeholders = columns.map(() => "?").join(",");
-          this.db.run(`INSERT INTO tasks (${columns.join(",")}) VALUES (${placeholders})`, params);
-          return Number(execOne(this.db, "SELECT last_insert_rowid() AS id").id);
+          const id = this.insertTaskRow({ ...fields, wbs_code: "tmp-new" });
+          this.resequenceWbsInDb({ placeId: id, anchorId: Number(anchorId), position });
+          return id;
         });
       },
       async updateTask(id, fields) {
@@ -3238,7 +3247,7 @@
           this.resequenceWbsInDb();
         });
       },
-      resequenceWbsInDb() {
+      resequenceWbsInDb(placement) {
         const rows = execRows(this.db, "SELECT id, parent_id FROM tasks");
         const childrenByParent = new Map();
         for (const row of rows) {
@@ -3247,8 +3256,16 @@
           childrenByParent.get(key).push(Number(row.id));
         }
         const current = new Map(execRows(this.db, "SELECT id, wbs_code FROM tasks").map(r => [Number(r.id), r.wbs_code]));
-        for (const list of childrenByParent.values()) {
+        for (const [key, siblings] of childrenByParent) {
+          const placing = placement && siblings.includes(placement.placeId);
+          const list = placing ? siblings.filter(id => id !== placement.placeId) : siblings;
           list.sort((a, b) => compareWbs(current.get(a), current.get(b)));
+          if (placing) {
+            const anchorIndex = list.indexOf(placement.anchorId);
+            const at = anchorIndex === -1 ? list.length : placement.position === "above" ? anchorIndex : anchorIndex + 1;
+            list.splice(at, 0, placement.placeId);
+          }
+          childrenByParent.set(key, list);
         }
         const updates = [];
         const assign = (parentId, prefix) => {
@@ -3261,7 +3278,10 @@
           });
         };
         assign(null, "");
-        for (const [code, id] of updates) this.db.run("UPDATE tasks SET wbs_code = ? WHERE id = ?", [code, id]);
+        // wbs_code is UNIQUE: park changed rows on temporary codes before writing final ones.
+        const changed = updates.filter(([code, id]) => current.get(id) !== code);
+        for (const [, id] of changed) this.db.run("UPDATE tasks SET wbs_code = ? WHERE id = ?", [`tmp-${id}`, id]);
+        for (const [code, id] of changed) this.db.run("UPDATE tasks SET wbs_code = ? WHERE id = ?", [code, id]);
       },
       exportSQL() {
         const tables = ["tasks", "project_settings", "sprints", "dependencies", "baseline_meta", "baseline_tasks", "saved_views", "scenarios", "raid_items", "change_logs"];
@@ -4117,6 +4137,9 @@
 
         const items = [
           { label: "👁️ View Details", action: () => DetailsDrawer.open(this.activeTaskId) },
+          { separator: true },
+          { label: "⬆️ Insert Task Above", action: () => AppShell.insertSiblingTask(this.activeTaskId, "above") },
+          { label: "⬇️ Insert Task Below", action: () => AppShell.insertSiblingTask(this.activeTaskId, "below") },
           { separator: true },
           { label: "➡️ Indent Task", action: () => this.indent() },
           { label: "⬅️ Outdent Task", action: () => this.outdent() },
@@ -6068,6 +6091,22 @@
           this.editTaskTitle(id);
         } catch (error) {
           showToast(`Unable to add child task: ${error.message}`, "error");
+        }
+      },
+      async insertSiblingTask(anchorId, position) {
+        try {
+          const anchor = findTask(anchorId);
+          if (!anchor) return;
+          const parent = anchor.parent_id == null ? null : findTask(anchor.parent_id);
+          const id = await state.storage.insertTaskAt(
+            newTaskFields({ parent_id: anchor.parent_id ?? null, ...datesFromParent(parent) }),
+            anchor.id,
+            position
+          );
+          await this.refresh();
+          this.editTaskTitle(id);
+        } catch (error) {
+          showToast(`Unable to insert task: ${error.message}`, "error");
         }
       },
       editTaskTitle(id) {

@@ -91,3 +91,70 @@ test.describe("Subtask date inheritance", () => {
     await expect(cell(page, "Phase", "end_date")).toHaveText("2026-11-06");
   });
 });
+
+test.describe("Insert task in the middle", () => {
+  test("Insert Above at root shifts later roots", async ({ page }) => {
+    await addRoot(page, "Alpha");
+    await addRoot(page, "Beta");
+    await addRoot(page, "Gamma");
+
+    await insertSibling(page, "Beta", "Above", "Mid");
+
+    expect(await outline(page)).toEqual([["1", "Alpha"], ["2", "Mid"], ["3", "Beta"], ["4", "Gamma"]]);
+  });
+
+  test("Insert Below a parent lands after its subtree and children keep their prefix", async ({ page }) => {
+    await addRoot(page, "Alpha");
+    await addChild(page, "Alpha", "Kid");
+    await addRoot(page, "Beta");
+    await addChild(page, "Beta", "Cub");
+
+    await insertSibling(page, "Alpha", "Below", "Mid");
+
+    expect(await outline(page)).toEqual([
+      ["1", "Alpha"], ["1.1", "Kid"], ["2", "Mid"], ["3", "Beta"], ["3.1", "Cub"]
+    ]);
+  });
+
+  test("Insert between child tasks renumbers only those siblings", async ({ page }) => {
+    await addRoot(page, "Alpha");
+    await addChild(page, "Alpha", "Kid");
+    await addChild(page, "Alpha", "Twin");
+    await addRoot(page, "Beta");
+
+    await insertSibling(page, "Twin", "Above", "Mid");
+
+    expect(await outline(page)).toEqual([
+      ["1", "Alpha"], ["1.1", "Kid"], ["1.2", "Mid"], ["1.3", "Twin"], ["2", "Beta"]
+    ]);
+  });
+
+  test("inserted child sibling takes the parent dates", async ({ page }) => {
+    await addRoot(page, "Phase");
+    await setCell(page, "Phase", "start_date", "2026-11-02");
+    await setCell(page, "Phase", "end_date", "2026-11-06");
+    await addChild(page, "Phase", "Kid");
+
+    await insertSibling(page, "Kid", "Above", "Mid");
+
+    await expect(cell(page, "Mid", "start_date")).toHaveText("2026-11-02");
+    await expect(cell(page, "Mid", "end_date")).toHaveText("2026-11-06");
+    await expect(cell(page, "Phase", "start_date")).toHaveText("2026-11-02");
+    await expect(cell(page, "Phase", "end_date")).toHaveText("2026-11-06");
+  });
+
+  test("dependency follows its task after renumbering", async ({ page }) => {
+    await addRoot(page, "Alpha");
+    await addRoot(page, "Beta");
+    await cell(page, "Beta", "predecessors_display").click();
+    const input = cell(page, "Beta", "predecessors_display").locator("input");
+    await input.fill("1");
+    await input.press("Enter");
+    await expect(cell(page, "Beta", "predecessors_display")).toHaveText(/^1/);
+
+    await insertSibling(page, "Alpha", "Above", "Mid");
+
+    expect(await outline(page)).toEqual([["1", "Mid"], ["2", "Alpha"], ["3", "Beta"]]);
+    await expect(cell(page, "Beta", "predecessors_display")).toHaveText(/^2/);
+  });
+});
