@@ -1200,7 +1200,8 @@
         <h3>Task Hierarchy: Parents and Subtasks</h3>
         <p>NovaPlan supports unlimited nesting. Each task has a <strong>WBS code</strong> (e.g. <code>1</code>, <code>1.1</code>, <code>1.1.2</code>) that shows its position in the hierarchy.</p>
         <ul class="help-steps">
-          <li>Click <code>+</code> on any row to add a subtask beneath it. The parent row turns <strong>bold</strong> — it is now a <em>summary row</em>.</li>
+          <li>Click <code>+</code> on any row to add a subtask beneath it. The parent row turns <strong>bold</strong> — it is now a <em>summary row</em>. A new subtask starts with its parent's planned start and end dates.</li>
+          <li>Right-click any row and choose <strong>Insert Task Above</strong> or <strong>Insert Task Below</strong> to add a task at that position, at the same level. WBS codes of the rows that follow are renumbered automatically.</li>
           <li>Summary rows <strong>automatically roll up</strong> dates (earliest start → latest end), hours (sum), and progress (weighted average).</li>
           <li>Click the <strong>▾</strong> (down triangle) next to a parent task name to collapse all its subtasks. Click <strong>▸</strong> to expand them again.</li>
           <li>Use <strong>▸ All</strong> and <strong>▾ All</strong> buttons in the panel header to collapse or expand the entire hierarchy at once.</li>
