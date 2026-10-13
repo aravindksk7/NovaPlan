@@ -21,8 +21,10 @@ Scope: `NovaPlan.html` (single-file app), new Playwright spec, README/help text.
 - Inside text that does not fit moves beside the bar instead of being cut.
 - Inside text colour chosen automatically for contrast when no colour is set.
 - Per-label font size, bold and italic.
-- Plans saved before this change render exactly as they do today, except for the
-  overflow behaviour described in section 3.
+- Plans saved before this change keep their label positions and alignment. Three
+  things do change: long inside labels move beside the bar (section 3), inside text
+  turns dark on light bar colours (section 4), and milestone labels sit against the
+  diamond's edge (section 2).
 
 ## Non-goals
 
@@ -101,7 +103,8 @@ with inside text.
 
 Milestones: the caller passes the diamond's bounds as the bar (`x = cx - 12`,
 `w = 24`). `inside` and `middle` resolve to `after`, because a diamond cannot hold
-text. Above/below then align against the diamond.
+text. Above/below align against the diamond, and automatic alignment resolves to
+`center` for milestones so the text sits over the diamond.
 
 `ganttLabelNode` calls `ganttLabelLayout` and applies the result. The drag preview in
 `dragMove` calls the same function with the bar's live `x` and `w`, replacing the four
@@ -130,6 +133,12 @@ re-deriving them from the task.
 
 The overflow mode is a global setting, default `outside`. This is the one visible
 change for existing plans: long inside labels now appear to the right of the bar.
+
+The Gantt SVG ends about 20px after the last day and clips what lies beyond it. So
+when a label was moved to `after` automatically (by overflow, or by the milestone
+rule) and it does not fit to the right of the bar but does fit to the left, it uses
+`before` instead. `buildBodySvg` passes the free space on each side to `ganttLabel`.
+A position of `after` chosen by the user or the global setting is never flipped.
 
 Fit is not re-evaluated while dragging or resizing. The refresh after drop re-runs it.
 
@@ -195,7 +204,8 @@ apply only when the task has custom timeline text. Tasks without it use the glob
 settings. Colour and font keep their current behaviour.
 
 **Grid column edit**: editing the `Gantt Text` cell still defaults a new label to
-`above`; no change.
+`above`. Emptying the cell now resets every label field (position, colour, font,
+alignment, size, bold, italic), the same as the dialog's Clear.
 
 ### 7. Import / export
 
