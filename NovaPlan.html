@@ -1200,7 +1200,8 @@
         <h3>Task Hierarchy: Parents and Subtasks</h3>
         <p>NovaPlan supports unlimited nesting. Each task has a <strong>WBS code</strong> (e.g. <code>1</code>, <code>1.1</code>, <code>1.1.2</code>) that shows its position in the hierarchy.</p>
         <ul class="help-steps">
-          <li>Click <code>+</code> on any row to add a subtask beneath it. The parent row turns <strong>bold</strong> — it is now a <em>summary row</em>.</li>
+          <li>Click <code>+</code> on any row to add a subtask beneath it. The parent row turns <strong>bold</strong> — it is now a <em>summary row</em>. A new subtask starts with its parent's planned start and end dates.</li>
+          <li>Right-click any row and choose <strong>Insert Task Above</strong> or <strong>Insert Task Below</strong> to add a task at that position, at the same level. WBS codes of the rows that follow are renumbered automatically.</li>
           <li>Summary rows <strong>automatically roll up</strong> dates (earliest start → latest end), hours (sum), and progress (weighted average).</li>
           <li>Click the <strong>▾</strong> (down triangle) next to a parent task name to collapse all its subtasks. Click <strong>▸</strong> to expand them again.</li>
           <li>Use <strong>▸ All</strong> and <strong>▾ All</strong> buttons in the panel header to collapse or expand the entire hierarchy at once.</li>
@@ -1276,7 +1277,7 @@
         <h4>Plan Start / Plan End</h4>
         <p>These are the <em>scheduled</em> dates for a task. Click either cell to open a date picker. On summary rows, start and end roll up automatically from child tasks (you cannot edit them directly unless you check <em>Manually Scheduled</em>).</p>
         <h4>Duration (Dur)</h4>
-        <p>Duration is read-only and calculated from the start/end dates using the working calendar (e.g. <code>3d 4h</code> means three working days and four hours). You can also type hours directly into the <code>Hours</code> column.</p>
+        <p>Duration is read-only and calculated from the start/end dates using the working calendar (e.g. <code>3d 4h</code> means three working days and four hours). <code>Hours</code> and <code>Plan End</code> stay in step: changing <code>Plan End</code> recalculates <code>Hours</code>, and typing <code>Hours</code> moves <code>Plan End</code>. Changing <code>Plan Start</code> moves the whole task and keeps its length.</p>
         <h4>Actual Start / Actual End</h4>
         <p>Fill these in as work progresses. They're compared with planned dates to calculate slippage. Actual date bars appear below the Gantt bar in a lighter colour.</p>
         <h4>Working Calendar</h4>
@@ -1334,6 +1335,14 @@
           <tr><td><code>SF</code></td><td>Start-to-Finish</td><td>Predecessor starts before successor can finish. Rare.</td></tr>
         </table>
         <p style="margin-top:6px">Lag is in working days (<code>d</code>) or hours (<code>h</code>). Positive lag = gap; negative lag = overlap (lead).</p>
+        <h4>Automatic rescheduling</h4>
+        <p>When a task's dates change — in the grid, in the details drawer, or by dragging its Gantt bar — every task that depends on it moves too, and so do the tasks that depend on those.</p>
+        <ul class="help-steps">
+          <li><strong>Dependent tasks keep their length.</strong> Only their dates shift; <code>Hours</code> stay the same.</li>
+          <li><strong>Summary tasks move with their subtasks.</strong> If a summary depends on a task that moved, all of its subtasks shift by the same number of working days. Moving a subtask also reschedules whatever depends on its parent.</li>
+          <li><strong>A task cannot start before its predecessors allow.</strong> A date typed in the grid or drawer is rejected with a message giving the earliest allowed date.</li>
+          <li><strong>A gap becomes lag.</strong> Place a dependent task later than it needs to be and the gap is added to its predecessor entry (<code>1FS</code> becomes <code>1FS+2d</code>), so the gap is kept when the predecessor moves. Move the task back, or edit the lag, to close the gap.</li>
+        </ul>
         <div class="help-tip">💡 Dependency arrows appear on the Gantt chart as curved lines with arrowheads. NovaPlan automatically detects and warns about circular dependencies.</div>
       </section>
 
@@ -1343,7 +1352,7 @@
         <h4>Reading the chart</h4>
         <table>
           <tr><th>Visual element</th><th>What it means</th></tr>
-          <tr><td>Coloured bar</td><td>Planned schedule. Colour matches the task type.</td></tr>
+          <tr><td>Coloured bar</td><td>Planned schedule, from Plan Start to Plan End including any non-working days in between. Colour matches the task type.</td></tr>
           <tr><td>Darker fill inside bar</td><td>Completed portion (progress %).</td></tr>
           <tr><td>Thin bar below main bar</td><td>Actual start/end dates (shown in white or red if slipped).</td></tr>
           <tr><td>Thin gray bar below</td><td>Baseline dates (where the task was when you set the baseline).</td></tr>
@@ -1354,6 +1363,34 @@
           <tr><td>Shaded columns</td><td>Non-working days (weekends and holidays).</td></tr>
           <tr><td>Curved arrows</td><td>Dependencies between tasks.</td></tr>
         </table>
+        <h4>Dragging bars to reschedule</h4>
+        <table>
+          <tr><th>Action</th><th>Result</th></tr>
+          <tr><td>Drag the middle of a bar</td><td>Moves the task. Its length and <code>Hours</code> stay the same.</td></tr>
+          <tr><td>Drag the left or right edge</td><td>Changes the start or end date and updates <code>Hours</code>.</td></tr>
+          <tr><td>Drag a milestone diamond</td><td>Moves the milestone to another day.</td></tr>
+        </table>
+        <ul class="help-steps" style="margin-top:6px">
+          <li>Bars move in whole days and skip non-working days in the direction you drag, so a task never starts or ends on a weekend or holiday.</li>
+          <li>A dependent task stops at the earliest date its predecessors allow. Dropping it later records the gap as lag in <code>Predecessors</code>.</li>
+          <li>Tasks that depend on the one you dragged are rescheduled straight away, and the grid updates to match.</li>
+          <li>Summary bars cannot be dragged — move their subtasks instead.</li>
+        </ul>
+        <h4>Timeline text</h4>
+        <p>Click any bar to give it its own text. <code>Tools → Gantt Label Settings</code> sets the defaults for every other bar.</p>
+        <table>
+          <tr><th>Option</th><th>What it does</th></tr>
+          <tr><td>Position</td><td><code>Above</code>, <code>Middle</code> or <code>Below</code> the bar, or <code>Before</code> / <code>After</code> to place the text beside it.</td></tr>
+          <tr><td>Alignment</td><td><code>Left</code>, <code>Center</code> or <code>Right</code> lines the text up with the bar's start, middle or end. Click the pressed button again to go back to automatic. Not used for Before / After.</td></tr>
+          <tr><td>Size and Style</td><td>Small, Medium or Large text, with optional Bold and Italic.</td></tr>
+          <tr><td>Text color</td><td>Leave it alone for automatic: text on a bar turns dark on light bars and white on dark ones.</td></tr>
+        </table>
+        <ul class="help-steps" style="margin-top:6px">
+          <li>Text that is too long to fit inside its bar moves to the right of the bar. To cut it short instead, set <code>Text too long for bar</code> to <code>Truncate</code> in Gantt Label Settings.</li>
+          <li>Text that would run off the right end of the timeline is placed to the left of its bar instead.</li>
+          <li>Milestone text always sits beside or above/below the diamond, never on it.</li>
+          <li>Alignment, size, bold and italic are included in Excel and CSV export, and in CSV import.</li>
+        </ul>
         <h4>Zooming</h4>
         <p>Use the <code>−</code> and <code>+</code> buttons in the Gantt panel header to zoom out or in. Eight levels from 25% (very wide view) to 400% (very detailed daily view). The date tick spacing adjusts automatically.</p>
         <h4>Hovering</h4>
@@ -1631,12 +1668,12 @@
           <tr><td><code>Type</code></td><td>✓</td><td>Task category. Sets the default Gantt bar colour. See Task Types section for the full list.</td></tr>
           <tr><td><code>Color</code></td><td>✓</td><td>Custom Gantt bar colour. Click the swatch to pick any colour — it overrides the task-type colour on the Gantt chart and Board card. Click the ✕ to revert to the task-type colour.</td></tr>
           <tr><td><code>Task Name</code></td><td>✓</td><td>The task title. Click to rename. Parent tasks show ▾/▸ to collapse/expand subtasks. Indentation shows hierarchy depth.</td></tr>
-          <tr><td><code>Plan Start</code></td><td>✓</td><td>Planned start date. Summary rows show the earliest child start (read-only).</td></tr>
-          <tr><td><code>Plan End</code></td><td>✓</td><td>Planned finish date. Summary rows show the latest child end (read-only).</td></tr>
+          <tr><td><code>Plan Start</code></td><td>✓</td><td>Planned start date. Changing it moves the task, keeping its length, and reschedules dependent tasks. Summary rows show the earliest child start (read-only).</td></tr>
+          <tr><td><code>Plan End</code></td><td>✓</td><td>Planned finish date. Changing it recalculates Hours and reschedules dependent tasks. Summary rows show the latest child end (read-only).</td></tr>
           <tr><td><code>Actual Start</code></td><td>✓</td><td>Date work actually began. Compared with Plan Start to detect slippage.</td></tr>
           <tr><td><code>Actual End</code></td><td>✓</td><td>Date work actually finished. Compared with Plan End to detect slippage.</td></tr>
           <tr><td><code>Dur</code></td><td>—</td><td>Working duration, e.g. <code>3d 4h</code>. Calculated from Plan Start/End using the working calendar.</td></tr>
-          <tr><td><code>Hours</code></td><td>✓</td><td>Planned effort in hours. Summary rows show the sum of child hours.</td></tr>
+          <tr><td><code>Hours</code></td><td>✓</td><td>Planned effort in hours. Changing it moves Plan End to match. Summary rows show the sum of child hours.</td></tr>
           <tr><td><code>Actual h</code></td><td>✓</td><td>Hours of work already done against this task.</td></tr>
           <tr><td><code>Remain h</code></td><td>✓</td><td>Estimated hours still needed. Auto-updated when you change progress %; editable directly.</td></tr>
           <tr><td><code>EAC h</code></td><td>—</td><td>Estimate at Completion = Actual h + Remain h. A forecast of total effort.</td></tr>
@@ -1649,7 +1686,7 @@
           <tr><td><code>Slip</code></td><td>—</td><td>Slippage flag: <em>Slipped</em> (actual dates exceeded planned) or <em>At risk</em> (planned end passed, &lt;100% done).</td></tr>
           <tr><td><code>Base End</code></td><td>—</td><td>Baseline finish date. Only shown when a baseline is active.</td></tr>
           <tr><td><code>Finish Var</code></td><td>—</td><td>Days between current Plan End and Base End. Positive = later than baseline.</td></tr>
-          <tr><td><code>Predecessors</code></td><td>✓</td><td>Comma-separated dependency list. Format: <code>WBS[Type][Lag]</code> e.g. <code>1.2FS+2d</code>. See Dependencies section.</td></tr>
+          <tr><td><code>Predecessors</code></td><td>✓</td><td>Comma-separated dependency list. Format: <code>WBS[Type][Lag]</code> e.g. <code>1.2FS+2d</code>. Lag is added automatically when you place the task later than its predecessors require. See Dependencies section.</td></tr>
           <tr><td><code>Resource</code></td><td>✓</td><td>Person or team assigned. Free text. Used in Workload view for capacity analysis.</td></tr>
           <tr><td><code>Tags</code></td><td>✓</td><td>Comma-separated labels (e.g. <code>backend,api,v2</code>). Used for grouping and filtering.</td></tr>
           <tr><td><code>Jira</code></td><td>✓</td><td>Full URL to a Jira issue. Renders as a clickable <em>Open Jira</em> link in the grid and Excel export.</td></tr>
@@ -1669,6 +1706,7 @@
           <li><strong>Prevent data loss:</strong> Export SQL weekly. The file is small (&lt;1 MB for most projects) and can be restored instantly via Import.</li>
           <li><strong>GIF presentations:</strong> Export Gantt GIF → <em>Full timeline</em> mode for a static overview, or <em>Animated</em> for a panning GIF that looks great in slide decks.</li>
           <li><strong>Theme:</strong> Click 🌙 in the top bar to switch to light mode for bright-room presentations or printing.</li>
+          <li><strong>Reschedule by dragging:</strong> Drag a Gantt bar to move a task, or drag its edge to resize it. Dependent tasks follow automatically.</li>
           <li><strong>Hover for details:</strong> Hover any Gantt bar to see a detailed tooltip without opening the row for editing.</li>
           <li><strong>Jira integration:</strong> Enter Jira URLs in the <code>Jira</code> column. The Jira CSV export lets you bulk-import the plan into Jira as new issues.</li>
         </ul>
@@ -1692,8 +1730,13 @@
     const DB_NAME = "novaplan.sqlite";
     const LOCAL_STORAGE_KEY = "novaplan_sqlite_bytes_v1";
     const DEFAULT_CALENDAR = { workingDays: [1, 2, 3, 4, 5], hoursPerDay: 8, startTime: "09:00", endTime: "17:00", holidays: [] };
-    const DEFAULT_GANTT_LABELS = { source: "task", position: "inside" };
-    const GANTT_LABEL_POSITIONS = ["inside", "middle", "above", "below"];
+    const DEFAULT_GANTT_LABELS = { source: "task", position: "inside", align: "", size: "m", overflow: "outside" };
+    const GANTT_LABEL_POSITIONS = ["inside", "middle", "above", "below", "before", "after"];
+    const GANTT_TASK_LABEL_POSITIONS = ["above", "middle", "below", "before", "after"];
+    const GANTT_LABEL_ALIGNS = ["left", "center", "right"];
+    const GANTT_LABEL_SIZES = { s: 9, m: 11, l: 13 };
+    const GANTT_LABEL_OVERFLOWS = ["outside", "truncate"];
+    const GANTT_LABEL_PAD = 6;
     const DEFAULT_GANTT_LINE = { type: "date", date: "", task_id: null, color: "#00d4ff", thickness: 2 };
     const GANTT_LABEL_FONTS = [
       { value: "Inter, ui-sans-serif, system-ui, sans-serif", label: "Inter" },
@@ -1801,6 +1844,17 @@
 
     function pxPerDay() { return Math.round(PX_PER_DAY * GANTT_ZOOM_LEVELS[state.ganttZoomIdx]); }
     function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+    // Text colour for a label drawn on a bar: dark only on clearly light bars, so
+    // white stays the default and remains readable over the darker progress fill.
+    function contrastTextColor(hex) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(hex || "")) return "#ffffff";
+      const channel = offset => {
+        const c = Number.parseInt(hex.slice(offset, offset + 2), 16) / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      };
+      const luminance = 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+      return luminance > 0.35 ? "#111111" : "#ffffff";
+    }
 
     function todayIso() {
       const now = new Date();
@@ -1837,6 +1891,16 @@
 
     function durationDays(task) {
       return durationHours(task) / workingHoursPerDay();
+    }
+
+    // Gantt bar length in days: the calendar span of the planned dates, so the bar ends
+    // where the End date says. A task that uses only part of its last day is drawn part-width.
+    function barDays(task) {
+      if (!isValidIsoDate(task.start_date) || !isValidIsoDate(task.end_date) || task.end_date < task.start_date) return durationDays(task);
+      const hoursPerDay = workingHoursPerDay();
+      const lastDayHours = durationHours(task) - (workingDaysBetween(task.start_date, task.end_date) - 1) * hoursPerDay;
+      const lastDay = lastDayHours > 0 && lastDayHours < hoursPerDay ? lastDayHours / hoursPerDay : 1;
+      return daysBetween(task.start_date, task.end_date) + lastDay;
     }
 
     function workingHoursPerDay() {
@@ -1898,11 +1962,43 @@
       return date;
     }
 
+    // Nearest working date at or beyond dateStr, searching forward (1) or backward (-1).
+    function snapWorkingDate(dateStr, direction) {
+      let date = dateStr;
+      for (let i = 0; i < 14; i++) {
+        if (isWorkingDate(date)) return date;
+        date = addDays(date, direction < 0 ? -1 : 1);
+      }
+      return dateStr;
+    }
+
+    // Signed number of working days stepped over going from one date to another.
+    function workingDayOffset(fromDate, toDate) {
+      if (!isValidIsoDate(fromDate) || !isValidIsoDate(toDate) || fromDate === toDate) return 0;
+      const [first, last, sign] = fromDate < toDate ? [fromDate, toDate, 1] : [toDate, fromDate, -1];
+      let count = 0;
+      for (let date = addDays(first, 1); date <= last; date = addDays(date, 1)) {
+        if (isWorkingDate(date)) count++;
+      }
+      return sign * count;
+    }
+
+    function dependencySpecs(task) {
+      return task.dependencies?.length
+        ? task.dependencies
+        : splitCsv(task.predecessor_ids).map(id => ({ predecessor_id: Number(id), type: "FS", lag_hours: 0 }));
+    }
+
     // Given a task and its resolved dependency specs, compute the constrained
     // start_date and end_date based on each predecessor's dates and dep type/lag.
     // Returns { start_date, end_date } with the tightest valid schedule.
     function computeDatesFromDeps(task, specs, allTasksById) {
-      const durDays = Math.max(1, Math.round(durationHours(task) / workingHoursPerDay()));
+      // A rescheduled task keeps the working days its dates already span, so Hours that
+      // lag behind the dates cannot shrink it.
+      const dateSpanDays = isValidIsoDate(task.start_date) && isValidIsoDate(task.end_date) && task.end_date >= task.start_date
+        ? workingDaysBetween(task.start_date, task.end_date)
+        : 1;
+      const durDays = Math.max(1, dateSpanDays, Math.round(durationHours(task) / workingHoursPerDay()));
       let latestStart = null; // tightest start constraint (from FS / SS)
       let latestEnd   = null; // tightest end constraint   (from FF / SF)
 
@@ -1957,6 +2053,43 @@
       return { start_date: newStart, end_date: newEnd };
     }
 
+    // Fits a dependent task's lags to the dates it is being given: positive lag is shed to
+    // let it sit earlier, and a gap left after its predecessors becomes lag on the driving
+    // dependency so the gap survives later rescheduling. Returns null when no predecessor
+    // constrains the task; held means the dates are earlier than zero lag allows, and the
+    // returned dates are then the earliest allowed.
+    function fitToPredecessors(task, start_date, end_date) {
+      const specs = dependencySpecs(task);
+      if (!specs.length) return null;
+      const byId = new Map(state.tasks.map(t => [t.id, t]));
+      const hoursPerDay = workingHoursPerDay();
+      // Hours are left out so that only the requested dates size the task.
+      const subject = { ...task, start_date, end_date, duration_hours: 0 };
+      const startAllowedBy = dep => computeDatesFromDeps(subject, [dep], byId).start_date;
+
+      let changed = false;
+      const dependencies = specs.map(dep => {
+        const lag_hours = Number(dep.lag_hours || 0);
+        const allowed = startAllowedBy(dep);
+        if (!allowed || allowed <= start_date || lag_hours <= 0) return { ...dep, lag_hours };
+        changed = true;
+        const shedDays = Math.min(lag_hours / hoursPerDay, workingDayOffset(start_date, allowed));
+        return { ...dep, lag_hours: lag_hours - shedDays * hoursPerDay };
+      });
+      let fitted = computeDatesFromDeps(subject, dependencies, byId);
+      if (!fitted.start_date) return null;
+      if (fitted.start_date < start_date) {
+        const driver = dependencies.find(dep => startAllowedBy(dep) === fitted.start_date);
+        const gapDays = workingDayOffset(fitted.start_date, start_date);
+        if (driver && gapDays) {
+          changed = true;
+          driver.lag_hours += gapDays * hoursPerDay;
+          fitted = computeDatesFromDeps(subject, dependencies, byId);
+        }
+      }
+      return { dependencies, changed, start_date: fitted.start_date, end_date: fitted.end_date, held: fitted.start_date > start_date };
+    }
+
     function shiftedEndForStart(task, startDate) {
       if (!isValidIsoDate(startDate)) return startDate;
       const offset = isValidIsoDate(task.start_date) && isValidIsoDate(task.end_date)
@@ -1965,44 +2098,79 @@
       return addWorkingDays(startDate, offset);
     }
 
+    // Reschedules everything downstream of a task whose dates changed: its successors,
+    // the summary tasks above it (their dates roll up from children) and their successors.
     async function cascadeAutoSchedule(startingTaskId) {
       const tasks = await state.storage.loadTasks();
       const byId = new Map(tasks.map(t => [t.id, t]));
 
       const successors = new Map();
+      const childrenOf = new Map();
       for (const t of tasks) {
-        const predIds = splitCsv(t.predecessor_ids).map(Number);
-        for (const pid of predIds) {
+        for (const pid of splitCsv(t.predecessor_ids).map(Number)) {
           if (!successors.has(pid)) successors.set(pid, []);
           successors.get(pid).push(t);
         }
+        if (t.parent_id != null) {
+          if (!childrenOf.has(t.parent_id)) childrenOf.set(t.parent_id, []);
+          childrenOf.get(t.parent_id).push(t);
+        }
       }
+      const leavesOf = task => {
+        const children = childrenOf.get(task.id) || [];
+        return children.length ? children.flatMap(leavesOf) : [task];
+      };
+      // Summary dates are derived, never stored: recompute them from the children in memory.
+      const rollUp = parent => {
+        const children = childrenOf.get(parent.id) || [];
+        const start = children.map(c => c.start_date).filter(isValidIsoDate).sort()[0];
+        const end = children.map(c => c.end_date).filter(isValidIsoDate).sort().at(-1);
+        if (!start || !end || (start === parent.start_date && end === parent.end_date)) return false;
+        parent.start_date = start;
+        parent.end_date = end;
+        return true;
+      };
+      const moveTask = async (task, start_date, end_date) => {
+        task.start_date = start_date;
+        task.end_date = end_date;
+        await state.storage.updateTask(task.id, { start_date, end_date });
+      };
 
-      const queue = [startingTaskId];
-      const visited = new Set();
+      // loadTasks already rolled the starting task's new dates into its ancestors.
+      const queue = [Number(startingTaskId)];
+      for (let parent = byId.get(byId.get(queue[0])?.parent_id); parent && !queue.includes(parent.id); parent = byId.get(parent.parent_id)) {
+        queue.push(parent.id);
+      }
+      // Bounds the walk if dependencies and hierarchy ever form a loop.
+      let budget = (tasks.length + 1) * (tasks.length + 1);
 
-      while (queue.length) {
-        const currentId = queue.shift();
-        if (visited.has(currentId)) continue;
-        visited.add(currentId);
+      while (queue.length && budget-- > 0) {
+        const current = byId.get(queue.shift());
+        if (!current) continue;
 
-        const succs = successors.get(currentId) || [];
-        for (const succ of succs) {
-          const deps = succ.dependencies?.length
-            ? succ.dependencies
-            : splitCsv(succ.predecessor_ids).map(id => ({ predecessor_id: Number(id), type: "FS", lag_hours: 0 }));
+        const parent = byId.get(current.parent_id);
+        if (parent && !parent.manually_scheduled && rollUp(parent)) queue.push(parent.id);
 
-          const { start_date, end_date } = computeDatesFromDeps(succ, deps, byId);
-          if (start_date !== succ.start_date || end_date !== succ.end_date) {
-            succ.start_date = start_date;
-            succ.end_date = end_date;
+        for (const succ of successors.get(current.id) || []) {
+          const isRolledUp = childrenOf.has(succ.id) && !succ.manually_scheduled;
+          // A summary's Hours total its children, so only its dates say how long it spans.
+          const subject = isRolledUp ? { ...succ, duration_hours: 0 } : succ;
+          const { start_date, end_date } = computeDatesFromDeps(subject, dependencySpecs(succ), byId);
+          if (!start_date || !end_date || (start_date === succ.start_date && end_date === succ.end_date)) continue;
 
-            const workingDaysCount = workingDaysBetween(start_date, end_date);
-            const duration_hours = workingDaysCount * workingHoursPerDay();
-
-            await state.storage.updateTask(succ.id, { start_date, end_date, duration_hours });
-
+          if (!isRolledUp) {
+            await moveTask(succ, start_date, end_date);
             queue.push(succ.id);
+            continue;
+          }
+          // A summary moves by shifting the tasks beneath it; its own dates then roll up.
+          const shift = workingDayOffset(succ.start_date, start_date);
+          if (!shift) continue;
+          for (const leaf of leavesOf(succ)) {
+            if (!isValidIsoDate(leaf.start_date) || !isValidIsoDate(leaf.end_date)) continue;
+            const leafStart = shiftWorkingDate(leaf.start_date, shift);
+            await moveTask(leaf, leafStart, shiftedEndForStart(leaf, leafStart));
+            queue.push(leaf.id);
           }
         }
       }
@@ -2251,7 +2419,11 @@
         custom_fields_json: text(row.custom_fields_json),
         color: /^#[0-9a-fA-F]{6}$/.test(row.color || "") ? row.color : "",
         gantt_label: text(row.gantt_label),
-        gantt_label_position: ["above", "below", "middle"].includes(text(row.gantt_label_position)) ? text(row.gantt_label_position) : "",
+        gantt_label_position: GANTT_TASK_LABEL_POSITIONS.includes(text(row.gantt_label_position)) ? text(row.gantt_label_position) : "",
+        gantt_label_align: GANTT_LABEL_ALIGNS.includes(text(row.gantt_label_align)) ? text(row.gantt_label_align) : "",
+        gantt_label_size: Object.hasOwn(GANTT_LABEL_SIZES, text(row.gantt_label_size)) ? text(row.gantt_label_size) : "",
+        gantt_label_bold: ["0", "1"].includes(text(row.gantt_label_bold)) ? text(row.gantt_label_bold) : "",
+        gantt_label_italic: text(row.gantt_label_italic) === "1" ? "1" : "",
         gantt_label_color: /^#[0-9a-fA-F]{6}$/.test(row.gantt_label_color || "") ? row.gantt_label_color : "",
         gantt_label_font: GANTT_LABEL_FONTS.some(font => font.value === row.gantt_label_font) ? row.gantt_label_font : "",
         is_milestone: Number(row.is_milestone || 0),
@@ -2800,6 +2972,10 @@
             gantt_label_position TEXT,
             gantt_label_color TEXT,
             gantt_label_font TEXT,
+            gantt_label_align TEXT,
+            gantt_label_size TEXT,
+            gantt_label_bold TEXT,
+            gantt_label_italic TEXT,
             is_milestone INTEGER DEFAULT 0 CHECK (is_milestone IN (0, 1)),
             is_highlighted INTEGER DEFAULT 0 CHECK (is_highlighted IN (0, 1)),
             parent_id INTEGER,
@@ -2910,6 +3086,10 @@
           ["gantt_label_position", "ALTER TABLE tasks ADD COLUMN gantt_label_position TEXT"],
           ["gantt_label_color", "ALTER TABLE tasks ADD COLUMN gantt_label_color TEXT"],
           ["gantt_label_font", "ALTER TABLE tasks ADD COLUMN gantt_label_font TEXT"],
+          ["gantt_label_align", "ALTER TABLE tasks ADD COLUMN gantt_label_align TEXT"],
+          ["gantt_label_size", "ALTER TABLE tasks ADD COLUMN gantt_label_size TEXT"],
+          ["gantt_label_bold", "ALTER TABLE tasks ADD COLUMN gantt_label_bold TEXT"],
+          ["gantt_label_italic", "ALTER TABLE tasks ADD COLUMN gantt_label_italic TEXT"],
           ["github_url", "ALTER TABLE tasks ADD COLUMN github_url TEXT"],
           ["custom_fields_json", "ALTER TABLE tasks ADD COLUMN custom_fields_json TEXT"]
         ];
@@ -3016,6 +3196,9 @@
         settings.ganttLabels = { ...DEFAULT_GANTT_LABELS, ...(settings.ganttLabels || {}) };
         if (!["task", "custom"].includes(settings.ganttLabels.source)) settings.ganttLabels.source = DEFAULT_GANTT_LABELS.source;
         if (!GANTT_LABEL_POSITIONS.includes(settings.ganttLabels.position)) settings.ganttLabels.position = DEFAULT_GANTT_LABELS.position;
+        if (!["", ...GANTT_LABEL_ALIGNS].includes(settings.ganttLabels.align)) settings.ganttLabels.align = DEFAULT_GANTT_LABELS.align;
+        if (!Object.hasOwn(GANTT_LABEL_SIZES, settings.ganttLabels.size)) settings.ganttLabels.size = DEFAULT_GANTT_LABELS.size;
+        if (!GANTT_LABEL_OVERFLOWS.includes(settings.ganttLabels.overflow)) settings.ganttLabels.overflow = DEFAULT_GANTT_LABELS.overflow;
         settings.ganttLines = sanitizeGanttLines(settings.ganttLines);
         return settings;
       },
@@ -3173,13 +3356,22 @@
         state.activeBaseline = baseline.meta;
         return applyCriticalPath(applySummaryRollups(sortTasksByWbs(rows.map(row => normalizeTask(row, rows, depsByTask, baseline.rows)))));
       },
+      insertTaskRow(fields) {
+        const columns = Object.keys(fields);
+        const params = columns.map(key => fields[key]);
+        const placeholders = columns.map(() => "?").join(",");
+        this.db.run(`INSERT INTO tasks (${columns.join(",")}) VALUES (${placeholders})`, params);
+        return Number(execOne(this.db, "SELECT last_insert_rowid() AS id").id);
+      },
       async insertTask(fields) {
+        return this.transact(async () => this.insertTaskRow(fields));
+      },
+      // Inserts a sibling of anchorId directly "above" or "below" it and renumbers WBS codes.
+      async insertTaskAt(fields, anchorId, position) {
         return this.transact(async () => {
-          const columns = Object.keys(fields);
-          const params = columns.map(key => fields[key]);
-          const placeholders = columns.map(() => "?").join(",");
-          this.db.run(`INSERT INTO tasks (${columns.join(",")}) VALUES (${placeholders})`, params);
-          return Number(execOne(this.db, "SELECT last_insert_rowid() AS id").id);
+          const id = this.insertTaskRow({ ...fields, wbs_code: "tmp-new" });
+          this.resequenceWbsInDb({ placeId: id, anchorId: Number(anchorId), position });
+          return id;
         });
       },
       async updateTask(id, fields) {
@@ -3238,7 +3430,7 @@
           this.resequenceWbsInDb();
         });
       },
-      resequenceWbsInDb() {
+      resequenceWbsInDb(placement) {
         const rows = execRows(this.db, "SELECT id, parent_id FROM tasks");
         const childrenByParent = new Map();
         for (const row of rows) {
@@ -3247,8 +3439,16 @@
           childrenByParent.get(key).push(Number(row.id));
         }
         const current = new Map(execRows(this.db, "SELECT id, wbs_code FROM tasks").map(r => [Number(r.id), r.wbs_code]));
-        for (const list of childrenByParent.values()) {
+        for (const [key, siblings] of childrenByParent) {
+          const placing = placement && siblings.includes(placement.placeId);
+          const list = placing ? siblings.filter(id => id !== placement.placeId) : siblings;
           list.sort((a, b) => compareWbs(current.get(a), current.get(b)));
+          if (placing) {
+            const anchorIndex = list.indexOf(placement.anchorId);
+            const at = anchorIndex === -1 ? list.length : placement.position === "above" ? anchorIndex : anchorIndex + 1;
+            list.splice(at, 0, placement.placeId);
+          }
+          childrenByParent.set(key, list);
         }
         const updates = [];
         const assign = (parentId, prefix) => {
@@ -3261,7 +3461,10 @@
           });
         };
         assign(null, "");
-        for (const [code, id] of updates) this.db.run("UPDATE tasks SET wbs_code = ? WHERE id = ?", [code, id]);
+        // wbs_code is UNIQUE: park changed rows on temporary codes before writing final ones.
+        const changed = updates.filter(([code, id]) => current.get(id) !== code);
+        for (const [, id] of changed) this.db.run("UPDATE tasks SET wbs_code = ? WHERE id = ?", [`tmp-${id}`, id]);
+        for (const [code, id] of changed) this.db.run("UPDATE tasks SET wbs_code = ? WHERE id = ?", [code, id]);
       },
       exportSQL() {
         const tables = ["tasks", "project_settings", "sprints", "dependencies", "baseline_meta", "baseline_tasks", "saved_views", "scenarios", "raid_items", "change_logs"];
@@ -3338,15 +3541,25 @@
             const rawColor = pick(row, ["Color", "color"], "");
             const color = /^#[0-9a-fA-F]{6}$/.test(rawColor) ? rawColor : null;
             const ganttLabel = pick(row, ["Gantt Text", "Gantt Label", "gantt_label"], "").slice(0, 120);
-            const rawGanttLabelPosition = pick(row, ["Gantt Text Position", "Gantt Label Position", "gantt_label_position"], "").toLowerCase();
-            const ganttLabelPosition = ["above", "below", "middle"].includes(rawGanttLabelPosition) ? rawGanttLabelPosition : "";
+            const rawGanttLabelPosition = pick(row, ["Gantt Text Position", "Gantt Label Position", "gantt_label_position"], "").trim().toLowerCase();
+            const ganttLabelPosition = GANTT_TASK_LABEL_POSITIONS.includes(rawGanttLabelPosition) ? rawGanttLabelPosition : "";
+            const rawGanttLabelAlign = String(pick(row, ["Gantt Text Align", "Gantt Label Align", "gantt_label_align"], "")).trim().toLowerCase();
+            const ganttLabelAlign = GANTT_LABEL_ALIGNS.includes(rawGanttLabelAlign) ? rawGanttLabelAlign : "";
+            const rawGanttLabelSize = String(pick(row, ["Gantt Text Size", "Gantt Label Size", "gantt_label_size"], "")).trim().toLowerCase();
+            const ganttLabelSize = Object.hasOwn(GANTT_LABEL_SIZES, rawGanttLabelSize) ? rawGanttLabelSize : "";
+            const labelFlag = names => {
+              const value = String(pick(row, names, "")).trim().toLowerCase();
+              return ["yes", "true", "1"].includes(value) ? "1" : ["no", "false", "0"].includes(value) ? "0" : "";
+            };
+            const ganttLabelBold = labelFlag(["Gantt Text Bold", "Gantt Label Bold", "gantt_label_bold"]);
+            const ganttLabelItalic = labelFlag(["Gantt Text Italic", "Gantt Label Italic", "gantt_label_italic"]) === "1" ? "1" : "";
             const rawGanttLabelColor = pick(row, ["Gantt Text Color", "Gantt Label Color", "gantt_label_color"], "");
             const ganttLabelColor = /^#[0-9a-fA-F]{6}$/.test(rawGanttLabelColor) ? rawGanttLabelColor : "";
             const rawGanttLabelFont = pick(row, ["Gantt Text Font", "Gantt Label Font", "gantt_label_font"], "");
             const ganttLabelFont = GANTT_LABEL_FONTS.find(font => font.value === rawGanttLabelFont || font.label.toLowerCase() === rawGanttLabelFont.toLowerCase())?.value || "";
             this.db.run(
-              "INSERT INTO tasks (wbs_code, task_type, title, start_date, end_date, actual_start_date, actual_end_date, duration_hours, actual_hours, remaining_hours, progress, predecessor_ids, resource, comments, tags, jira_url, color, gantt_label, gantt_label_position, gantt_label_color, gantt_label_font, is_milestone, is_highlighted, parent_id, status, priority, sprint_id, manually_scheduled, constraint_type, constraint_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,0,NULL,NULL)",
-              [wbs, DEFAULT_TYPE, title, start, end, null, null, duration, actual, remaining, progress, "", pick(row, ["Resource", "Assignee", "resource"]), pick(row, ["Comments", "Description", "comments"]), pick(row, ["Tags", "Labels", "tags"]), jira, color, ganttLabel, ganttLabelPosition, ganttLabelColor, ganttLabelFont, /^yes|true|1$/i.test(pick(row, ["Milestone", "is_milestone"])), 0, null, status, priority]
+              "INSERT INTO tasks (wbs_code, task_type, title, start_date, end_date, actual_start_date, actual_end_date, duration_hours, actual_hours, remaining_hours, progress, predecessor_ids, resource, comments, tags, jira_url, color, gantt_label, gantt_label_position, gantt_label_color, gantt_label_font, gantt_label_align, gantt_label_size, gantt_label_bold, gantt_label_italic, is_milestone, is_highlighted, parent_id, status, priority, sprint_id, manually_scheduled, constraint_type, constraint_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,0,NULL,NULL)",
+              [wbs, DEFAULT_TYPE, title, start, end, null, null, duration, actual, remaining, progress, "", pick(row, ["Resource", "Assignee", "resource"]), pick(row, ["Comments", "Description", "comments"]), pick(row, ["Tags", "Labels", "tags"]), jira, color, ganttLabel, ganttLabelPosition, ganttLabelColor, ganttLabelFont, ganttLabelAlign, ganttLabelSize, ganttLabelBold, ganttLabelItalic, /^yes|true|1$/i.test(pick(row, ["Milestone", "is_milestone"])), 0, null, status, priority]
             );
           }
         });
@@ -4018,12 +4231,24 @@
           const fields = this.normalizeEdit(task, key, value);
           const shouldScrollGantt = ["start_date", "end_date", "actual_start_date", "actual_end_date", "duration_hours", "predecessors_display"].includes(key);
           await state.storage.updateTask(task.id, fields);
+          if (["start_date", "end_date", "duration_hours", "predecessors_display"].includes(key)) await cascadeAutoSchedule(task.id);
           await AppShell.refresh();
           if (shouldScrollGantt) GanttChart.scrollToTask(task.id);
         } catch (error) {
           showToast(error.message, "error");
           await AppShell.refresh();
         }
+      },
+      // Lag changes that keep a dependent task where an edit puts it. Rejects dates its
+      // predecessors do not allow.
+      predecessorFields(task, start_date, end_date, edge) {
+        if (task.is_summary || !isValidIsoDate(start_date) || !isValidIsoDate(end_date)) return {};
+        const fit = fitToPredecessors(task, start_date, end_date);
+        if (!fit) return {};
+        if (fit.held) {
+          throw new Error(`Predecessors allow a ${edge} no earlier than ${edge === "start" ? fit.start_date : fit.end_date}`);
+        }
+        return fit.changed ? { __dependencies: fit.dependencies } : {};
       },
       normalizeEdit(task, key, value) {
         const trimmed = text(value).trim();
@@ -4043,12 +4268,18 @@
         }
         if (key === "start_date") {
           if (!isValidIsoDate(trimmed)) throw new Error("Start date must be valid");
-          return { start_date: trimmed, end_date: shiftedEndForStart(task, trimmed) };
+          const end_date = shiftedEndForStart(task, trimmed);
+          return { start_date: trimmed, end_date, ...this.predecessorFields(task, trimmed, end_date, "start") };
         }
         if (key === "end_date") {
           if (!isValidIsoDate(trimmed)) throw new Error("End date must be valid");
           if (task.start_date && trimmed < task.start_date) throw new Error("End date must be on or after start date");
-          return { end_date: trimmed };
+          const fields = { end_date: trimmed, ...this.predecessorFields(task, task.start_date, trimmed, "finish") };
+          // Hours follow the planned dates.
+          if (isValidIsoDate(task.start_date) && !task.is_milestone && !task.is_summary) {
+            fields.duration_hours = workingDaysBetween(task.start_date, trimmed) * workingHoursPerDay();
+          }
+          return fields;
         }
         if (key === "actual_start_date") {
           if (!trimmed) return { actual_start_date: null };
@@ -4065,7 +4296,12 @@
         if (key === "duration_hours") {
           const n = Number(trimmed);
           if (!Number.isFinite(n) || n <= 0) throw new Error("Duration hours must be greater than 0");
-          return { duration_hours: Math.round(n * 4) / 4 };
+          const fields = { duration_hours: Math.round(n * 4) / 4 };
+          // The End date follows the Hours.
+          if (isValidIsoDate(task.start_date) && !task.is_milestone && !task.is_summary) {
+            fields.end_date = addWorkingDays(task.start_date, Math.ceil(n / workingHoursPerDay()) - 1);
+          }
+          return fields;
         }
         if (key === "actual_hours" || key === "remaining_hours") {
           const n = Number(trimmed);
@@ -4094,7 +4330,19 @@
         if (key === "comments") return { comments: trimmed.slice(0, 2000) };
         if (key === "gantt_label") {
           const ganttLabel = trimmed.slice(0, 120);
-          return { gantt_label: ganttLabel, gantt_label_position: ganttLabel ? (task.gantt_label_position || "above") : "" };
+          if (!ganttLabel) {
+            return {
+              gantt_label: "",
+              gantt_label_position: "",
+              gantt_label_color: "",
+              gantt_label_font: "",
+              gantt_label_align: "",
+              gantt_label_size: "",
+              gantt_label_bold: "",
+              gantt_label_italic: ""
+            };
+          }
+          return { gantt_label: ganttLabel, gantt_label_position: task.gantt_label_position || "above" };
         }
         if (key === "tags") return { tags: splitCsv(trimmed).join(",") };
         if (key === "jira_url") return { jira_url: normalizeJiraUrl(trimmed) };
@@ -4117,6 +4365,9 @@
 
         const items = [
           { label: "👁️ View Details", action: () => DetailsDrawer.open(this.activeTaskId) },
+          { separator: true },
+          { label: "⬆️ Insert Task Above", action: () => AppShell.insertSiblingTask(this.activeTaskId, "above") },
+          { label: "⬇️ Insert Task Below", action: () => AppShell.insertSiblingTask(this.activeTaskId, "below") },
           { separator: true },
           { label: "➡️ Indent Task", action: () => this.indent() },
           { label: "⬅️ Outdent Task", action: () => this.outdent() },
@@ -4350,9 +4601,12 @@
           if (!isValidIsoDate(task.start_date) || !isValidIsoDate(task.end_date)) continue;
           const y = i * ROW_HEIGHT + BAR_PADDING_TOP;
           const x = this.dateToX(minDate, task.start_date);
-          const w = Math.max(4, durationDays(task) * pxPerDay());
+          const w = Math.max(4, barDays(task) * pxPerDay());
           const color = task.is_summary ? "#7d8590" : (task.color || TaskTypes[task.task_type]?.color || "#666688");
-          const label = this.ganttLabel(task, w);
+          const isDiamond = task.is_milestone && !task.is_summary;
+          const boxLeft = isDiamond ? x - 12 : x;
+          const boxRight = isDiamond ? x + 12 : x + w;
+          const label = this.ganttLabel(task, w, { before: boxLeft, after: width - boxRight });
           const dangerClr = cssVar("--danger") || "#ff5f7a";
           const orangeClr = cssVar("--neon-orange") || "#ff9900";
           const nearClr = document.body.classList.contains("light") ? "#d97706" : "#ffd89a";
@@ -4374,7 +4628,7 @@
             }
             if (task.is_highlighted) diamond.setAttribute("filter", "url(#glow-cyan)");
             svg.appendChild(diamond);
-            if (label.text) svg.appendChild(this.ganttLabelNode(x + 14, y, label.text, label.position, 0, label, task.id));
+            if (label.text) svg.appendChild(this.ganttLabelNode(x - 12, y, 24, label, task.id, color, true));
           } else {
             const bar = this.rect(x, y, w, BAR_HEIGHT, color, 3);
             bar.classList.add("gantt-bar");
@@ -4395,7 +4649,7 @@
             progress.setAttribute("pointer-events", "none");
             progress.dataset.taskId = task.id;
             svg.appendChild(progress);
-            if (label.text) svg.appendChild(this.ganttLabelNode(x, y, label.text, label.position, w, label, task.id));
+            if (label.text) svg.appendChild(this.ganttLabelNode(x, y, w, label, task.id, color));
           }
           if (isValidIsoDate(task.actual_start_date) && isValidIsoDate(task.actual_end_date)) {
             const ax = this.dateToX(minDate, task.actual_start_date);
@@ -4416,8 +4670,8 @@
             if (!pred || !isValidIsoDate(pred.task.start_date) || !isValidIsoDate(pred.task.end_date) || !isValidIsoDate(task.start_date) || !isValidIsoDate(task.end_date)) continue;
             const predAnchor = pred.task.start_date;
             const taskAnchor = task.start_date;
-            const predOffset = type[0] === "S" ? 0 : Math.max(4, durationDays(pred.task) * pxPerDay());
-            const taskOffset = type[1] === "S" ? 0 : Math.max(4, durationDays(task) * pxPerDay());
+            const predOffset = type[0] === "S" ? 0 : Math.max(4, barDays(pred.task) * pxPerDay());
+            const taskOffset = type[1] === "S" ? 0 : Math.max(4, barDays(task) * pxPerDay());
             const lagOffset = (Number(dep.lag_hours || 0) / workingHoursPerDay()) * pxPerDay();
             const x1 = this.dateToX(minDate, predAnchor) + predOffset;
             const y1 = pred.index * ROW_HEIGHT + ROW_HEIGHT / 2;
@@ -4428,6 +4682,8 @@
             path.setAttribute("stroke", "#555577");
             path.setAttribute("fill", "none");
             path.setAttribute("marker-end", "url(#arrow)");
+            // Arrows end on bar edges; they must not block grabbing a bar there.
+            path.setAttribute("pointer-events", "none");
             svg.appendChild(path);
           }
         }
@@ -4499,60 +4755,137 @@
         }
         svg.appendChild(lineGroup);
       },
-      ganttLabel(task, width) {
+      // room: free space left of the bar's box (before) and right of it (after), in SVG units.
+      ganttLabel(task, width, room = { before: 0, after: Infinity }) {
         const settings = { ...DEFAULT_GANTT_LABELS, ...(state.settings?.ganttLabels || {}) };
         const custom = text(task.gantt_label).trim();
         const hasCustom = Boolean(custom);
         const raw = hasCustom ? custom : settings.source === "custom" ? "" : task.title;
         const value = text(raw).trim();
-        if (!value) return { text: "", position: settings.position };
-        const position = hasCustom
-          ? (["above", "below", "middle"].includes(task.gantt_label_position) ? task.gantt_label_position : "above")
+        let position = hasCustom
+          ? (GANTT_TASK_LABEL_POSITIONS.includes(task.gantt_label_position) ? task.gantt_label_position : "above")
           : (GANTT_LABEL_POSITIONS.includes(settings.position) ? settings.position : DEFAULT_GANTT_LABELS.position);
-        const inside = position === "inside" || position === "middle";
-        if (inside && Number(width) < 24) return { text: "", position };
-        const maxChars = inside
-          ? Math.max(1, Math.floor((Number(width) - 10) / 7))
-          : 36;
+        // A diamond cannot hold text.
+        let autoAfter = false;
+        if (task.is_milestone && !task.is_summary && (position === "inside" || position === "middle")) {
+          position = "after";
+          autoAfter = true;
+        }
+        if (!value) return { text: "", position };
+        const align = (hasCustom && task.gantt_label_align) || settings.align || "";
+        const size = GANTT_LABEL_SIZES[(hasCustom && task.gantt_label_size) || settings.size] || GANTT_LABEL_SIZES.m;
+        const font = GANTT_LABEL_FONTS.some(item => item.value === task.gantt_label_font) ? task.gantt_label_font : "";
+        const italic = hasCustom && task.gantt_label_italic === "1";
+        const boldFlag = hasCustom ? task.gantt_label_bold : "";
+        // Empty flag = automatic: bold when the text sits on the bar.
+        const isBold = onBar => boldFlag === "1" || (boldFlag !== "0" && onBar);
+        let inside = position === "inside" || position === "middle";
+        let shown = value;
+        if (inside) {
+          const fit = Number(width) - 2 * GANTT_LABEL_PAD;
+          const measure = candidate => this.measureLabel(candidate, { size, bold: isBold(true), italic, font });
+          if (measure(value) > fit) {
+            if (settings.overflow === "truncate") {
+              // Largest prefix (at least one character) that still fits with the ellipsis.
+              let lo = 0;
+              let hi = value.length - 1;
+              while (lo < hi) {
+                const mid = Math.ceil((lo + hi) / 2);
+                if (measure(`${value.slice(0, mid)}...`) <= fit) lo = mid;
+                else hi = mid - 1;
+              }
+              if (lo < 1) return { text: "", position };
+              shown = `${value.slice(0, lo)}...`;
+            } else {
+              position = "after";
+              inside = false;
+              autoAfter = true;
+            }
+          }
+        }
+        if (!inside && shown.length > 36) shown = `${shown.slice(0, 33)}...`;
+        if (position === "after" && autoAfter) {
+          // Outside text near the timeline's end would be clipped: use the left side if it fits there.
+          const need = this.measureLabel(shown, { size, bold: isBold(false), italic, font }) + GANTT_LABEL_PAD;
+          if (need > room.after && need <= room.before) position = "before";
+        }
         return {
-          text: value.length > maxChars ? `${value.slice(0, Math.max(1, maxChars - 3))}...` : value,
+          text: shown,
           position,
-          color: /^#[0-9a-fA-F]{6}$/.test(task.gantt_label_color || "") ? task.gantt_label_color : "",
-          font: GANTT_LABEL_FONTS.some(font => font.value === task.gantt_label_font) ? task.gantt_label_font : ""
+          align,
+          size,
+          bold: isBold(inside),
+          italic,
+          font,
+          color: /^#[0-9a-fA-F]{6}$/.test(task.gantt_label_color || "") ? task.gantt_label_color : ""
         };
       },
-      ganttLabelNode(x, y, value, position, width = 0, style = {}, taskId) {
-        const inside = position === "inside" || position === "middle";
-        const labelX = inside ? x + width / 2 : x;
-        const labelY = inside ? y + BAR_HEIGHT / 2 + 4 : position === "below" ? y + BAR_HEIGHT + 8 : y - 3;
-        const fill = style.color || (inside ? "#ffffff" : (cssVar("--text-primary") || "#e6edf3"));
-        const label = this.textNode(labelX, labelY, value, fill, 11);
-        if (taskId) label.dataset.taskId = taskId;
-        label.classList.add("gantt-label");
-        label.setAttribute("pointer-events", "none");
-        if (style.font) label.setAttribute("font-family", style.font);
-        if (inside) {
-          label.setAttribute("font-weight", "700");
-          label.setAttribute("dominant-baseline", "middle");
-          label.setAttribute("text-anchor", "middle");
-        }
-        return label;
+      measureLabel(value, { size, bold, italic, font }) {
+        const ctx = this._measureCtx || (this._measureCtx = document.createElement("canvas").getContext("2d"));
+        const family = font || this._labelFamily || (this._labelFamily = getComputedStyle(document.body).fontFamily || "sans-serif");
+        ctx.font = `${italic ? "italic " : ""}${bold ? "700 " : ""}${size}px ${family}`;
+        return ctx.measureText(value).width;
+      },
+      // x, y, w: the bar's left edge, top and width (for a milestone, the diamond's bounds).
+      ganttLabelLayout({ x, y, w, position, align, isMilestone = false }) {
+        const pos = isMilestone && (position === "inside" || position === "middle") ? "after" : position;
+        const midY = y + BAR_HEIGHT / 2 + 4;
+        if (pos === "before") return { x: x - GANTT_LABEL_PAD, y: midY, anchor: "end", baseline: "middle", inside: false, position: pos };
+        if (pos === "after") return { x: x + w + GANTT_LABEL_PAD, y: midY, anchor: "start", baseline: "middle", inside: false, position: pos };
+        const inside = pos === "inside" || pos === "middle";
+        const resolved = GANTT_LABEL_ALIGNS.includes(align) ? align : (inside || isMilestone) ? "center" : "left";
+        const pad = inside ? GANTT_LABEL_PAD : 0;
+        return {
+          x: resolved === "left" ? x + pad : resolved === "right" ? x + w - pad : x + w / 2,
+          y: inside ? midY : pos === "below" ? y + BAR_HEIGHT + 8 : y - 3,
+          anchor: resolved === "left" ? "start" : resolved === "right" ? "end" : "middle",
+          baseline: inside ? "middle" : "",
+          inside,
+          position: pos
+        };
+      },
+      ganttLabelNode(x, y, w, label, taskId, barColor, isMilestone = false) {
+        const layout = this.ganttLabelLayout({ x, y, w, position: label.position, align: label.align, isMilestone });
+        const fill = label.color || (layout.inside ? contrastTextColor(barColor) : (cssVar("--text-primary") || "#e6edf3"));
+        const node = this.textNode(layout.x, layout.y, label.text, fill, label.size);
+        if (taskId) node.dataset.taskId = taskId;
+        // The drag preview re-runs the layout from these.
+        node.dataset.position = layout.position;
+        node.dataset.align = label.align || "";
+        node.classList.add("gantt-label");
+        node.setAttribute("pointer-events", "none");
+        node.setAttribute("text-anchor", layout.anchor);
+        if (label.font) node.setAttribute("font-family", label.font);
+        if (label.bold) node.setAttribute("font-weight", "700");
+        if (label.italic) node.setAttribute("font-style", "italic");
+        if (layout.baseline) node.setAttribute("dominant-baseline", layout.baseline);
+        return node;
       },
       async editTimelineText(task) {
         const result = await showGanttTimelineTextDialog(task);
         if (!result) return;
-        if (result.clear || !result.text.trim()) {
-          await state.storage.updateTask(task.id, { gantt_label: "", gantt_label_position: "", gantt_label_color: "", gantt_label_font: "" });
-          await AppShell.refresh();
-          GanttChart.scrollToTask(task.id);
-          return;
-        }
-        await state.storage.updateTask(task.id, {
-          gantt_label: result.text.trim().slice(0, 120),
-          gantt_label_position: result.position,
-          gantt_label_color: result.color,
-          gantt_label_font: result.font
-        });
+        const cleared = result.clear || !result.text.trim();
+        await state.storage.updateTask(task.id, cleared
+          ? {
+              gantt_label: "",
+              gantt_label_position: "",
+              gantt_label_color: "",
+              gantt_label_font: "",
+              gantt_label_align: "",
+              gantt_label_size: "",
+              gantt_label_bold: "",
+              gantt_label_italic: ""
+            }
+          : {
+              gantt_label: result.text.trim().slice(0, 120),
+              gantt_label_position: result.position,
+              gantt_label_color: result.color,
+              gantt_label_font: result.font,
+              gantt_label_align: result.align,
+              gantt_label_size: result.size,
+              gantt_label_bold: result.bold,
+              gantt_label_italic: result.italic
+            });
         await AppShell.refresh();
         GanttChart.scrollToTask(task.id);
       },
@@ -4575,7 +4908,7 @@
           origStart: task.start_date,
           origEnd: task.end_date,
           origX: GanttChart.dateToX(state.gantt.minDate, task.start_date),
-          origW: Math.max(4, durationDays(task) * pxPerDay()),
+          origW: Math.max(4, barDays(task) * pxPerDay()),
           dragged: false,
           minDate: state.gantt.minDate
         };
@@ -4606,6 +4939,18 @@
         const barEl = ds.bar;
         const progressEl = svg.querySelector(`.gantt-progress[data-task-id="${ds.task.id}"]`);
         const labelEl = svg.querySelector(`.gantt-label[data-task-id="${ds.task.id}"]`);
+        const moveLabel = (x, w) => {
+          if (!labelEl) return;
+          const layout = GanttChart.ganttLabelLayout({
+            x,
+            y: 0,
+            w,
+            position: labelEl.dataset.position,
+            align: labelEl.dataset.align,
+            isMilestone: Boolean(ds.task.is_milestone)
+          });
+          labelEl.setAttribute("x", layout.x);
+        };
 
         if (ds.task.is_milestone) {
           const cx = Number(barEl.dataset.cx);
@@ -4614,23 +4959,14 @@
           const newCx = cx + dx;
           barEl.setAttribute("points", `${newCx},${cy - r} ${newCx + r},${cy} ${newCx},${cy + r} ${newCx - r},${cy}`);
 
-          if (labelEl) {
-            const pos = ds.task.gantt_label_position || "above";
-            const labelX = pos === "above" || pos === "below" ? newCx : newCx + 14;
-            labelEl.setAttribute("x", labelX);
-          }
+          moveLabel(newCx - r, r * 2);
         } else {
           if (ds.mode === "drag") {
             const newX = ds.origX + dx;
             barEl.setAttribute("x", newX);
             if (progressEl) progressEl.setAttribute("x", newX);
 
-            if (labelEl) {
-              const pos = ds.task.gantt_label_position || "above";
-              const inside = pos === "inside" || pos === "middle";
-              const labelX = inside ? newX + ds.origW / 2 : newX;
-              labelEl.setAttribute("x", labelX);
-            }
+            moveLabel(newX, ds.origW);
           } else if (ds.mode === "left-resize") {
             const newX = ds.origX + dx;
             const newW = Math.max(4, ds.origW - dx);
@@ -4640,24 +4976,14 @@
               progressEl.setAttribute("x", newX);
               progressEl.setAttribute("width", newW * (ds.task.progress / 100));
             }
-            if (labelEl) {
-              const pos = ds.task.gantt_label_position || "above";
-              const inside = pos === "inside" || pos === "middle";
-              const labelX = inside ? newX + newW / 2 : newX;
-              labelEl.setAttribute("x", labelX);
-            }
+            moveLabel(newX, newW);
           } else if (ds.mode === "right-resize") {
             const newW = Math.max(4, ds.origW + dx);
             barEl.setAttribute("width", newW);
             if (progressEl) {
               progressEl.setAttribute("width", newW * (ds.task.progress / 100));
             }
-            if (labelEl) {
-              const pos = ds.task.gantt_label_position || "above";
-              const inside = pos === "inside" || pos === "middle";
-              const labelX = inside ? ds.origX + newW / 2 : ds.origX;
-              labelEl.setAttribute("x", labelX);
-            }
+            moveLabel(ds.origX, newW);
           }
         }
       },
@@ -4673,39 +4999,52 @@
           GanttChart.wasDragged = true;
           const dx = e.clientX - ds.startX;
           const deltaDays = Math.round(dx / pxPerDay());
+          if (!deltaDays) {
+            await AppShell.refresh();
+            return;
+          }
 
+          // Dragged edges land on working days, skipping non-working days in the drag direction.
+          const snap = date => snapWorkingDate(date, deltaDays);
+          const isMove = Boolean(ds.task.is_milestone) || ds.mode === "drag";
           let newStart = ds.origStart;
           let newEnd = ds.origEnd;
 
-          if (ds.task.is_milestone) {
-            newStart = addDays(ds.origStart, deltaDays);
-            newEnd = newStart;
-          } else {
-            if (ds.mode === "drag") {
-              newStart = addDays(ds.origStart, deltaDays);
-              newEnd = addDays(ds.origEnd, deltaDays);
+          if (isMove) {
+            // A move keeps the task's working-day span, so its Hours stay as they are.
+            newStart = snap(addDays(ds.origStart, deltaDays));
+            newEnd = ds.task.is_milestone ? newStart : shiftedEndForStart(ds.task, newStart);
+          } else if (ds.mode === "left-resize") {
+            newStart = snap(addDays(ds.origStart, deltaDays));
+            if (newStart > newEnd) newStart = newEnd;
+          } else if (ds.mode === "right-resize") {
+            newEnd = snap(addDays(ds.origEnd, deltaDays));
+            if (newEnd < newStart) newEnd = newStart;
+          }
+
+          // Predecessors bound a dependent task; the gap it keeps after them is stored as lag.
+          const fit = fitToPredecessors(ds.task, newStart, newEnd);
+          if (fit?.held) {
+            if (isMove) {
+              newStart = fit.start_date;
+              newEnd = fit.end_date;
             } else if (ds.mode === "left-resize") {
-              newStart = addDays(ds.origStart, deltaDays);
-              if (newStart > newEnd) newStart = newEnd;
-            } else if (ds.mode === "right-resize") {
-              newEnd = addDays(ds.origEnd, deltaDays);
-              if (newEnd < newStart) newEnd = newStart;
+              newStart = fit.start_date > newEnd ? newEnd : fit.start_date;
+            } else {
+              newEnd = fit.end_date;
             }
           }
 
           try {
-            const workingDaysCount = workingDaysBetween(newStart, newEnd);
-            const duration_hours = ds.task.is_milestone ? 0 : workingDaysCount * workingHoursPerDay();
+            const fields = { start_date: newStart, end_date: newEnd };
+            if (!isMove) fields.duration_hours = workingDaysBetween(newStart, newEnd) * workingHoursPerDay();
+            if (fit?.changed) fields.__dependencies = fit.dependencies;
 
-            await state.storage.updateTask(ds.task.id, {
-              start_date: newStart,
-              end_date: newEnd,
-              duration_hours
-            });
+            await state.storage.updateTask(ds.task.id, fields);
 
             await cascadeAutoSchedule(ds.task.id);
             await AppShell.refresh();
-            showToast("Task schedule updated", "success");
+            showToast(fit?.held ? "Held at the earliest date its predecessors allow" : "Task schedule updated", fit?.held ? "info" : "success");
           } catch (error) {
             showToast(error.message, "error");
             await AppShell.refresh();
@@ -4922,6 +5261,10 @@
             "Gantt Text Position": t.gantt_label_position || "",
             "Gantt Text Color": t.gantt_label_color || "",
             "Gantt Text Font": GANTT_LABEL_FONTS.find(font => font.value === t.gantt_label_font)?.label || "",
+            "Gantt Text Align": t.gantt_label_align || "",
+            "Gantt Text Size": t.gantt_label_size || "",
+            "Gantt Text Bold": t.gantt_label_bold === "1" ? "Yes" : t.gantt_label_bold === "0" ? "No" : "",
+            "Gantt Text Italic": t.gantt_label_italic === "1" ? "Yes" : "",
             "Planned Start Date": t.start_date,
             "Planned End Date": t.end_date,
             "Actual Start Date": t.actual_start_date,
@@ -5231,7 +5574,7 @@
         const sprintOpts = [{ value: "", label: "None (Backlog)" }, ...state.sprints.map(s => ({ value: String(s.id), label: s.name }))];
         this.addFieldGroup("Sprint", "select", "sprint_id", task.sprint_id != null ? String(task.sprint_id) : "", sprintOpts);
 
-        this.addFieldGroup("Predecessors", "text", "predecessor_ids", task.predecessor_ids || "", null, null, null, "e.g. 1, 2");
+        this.addFieldGroup("Predecessors", "text", "predecessors_display", task.predecessors_display || "", null, null, null, "e.g. 1, 2FS+1d");
 
         const customColumns = state.customColumns || [];
         if (customColumns.length > 0) {
@@ -5288,28 +5631,30 @@
           if (type === "number") val = val ? Number(val) : 0;
           if (key === "sprint_id") val = val ? Number(val) : null;
 
+          const isScheduleField = ["start_date", "end_date", "predecessors_display"].includes(key);
           const fields = {};
-          if (isCustomField) {
-            const colKey = key.replace("custom_", "");
-            let customVals = {};
-            try { customVals = JSON.parse(task.custom_fields_json || "{}"); } catch {}
-            customVals[colKey] = val;
-            fields.custom_fields_json = JSON.stringify(customVals);
-          } else {
-            fields[key] = val;
-          }
 
           try {
-            await state.storage.updateTask(task.id, fields);
-            if (key === "start_date" || key === "end_date") {
-              if (typeof cascadeAutoSchedule === "function") {
-                cascadeAutoSchedule(task.id);
-              }
+            if (isCustomField) {
+              const colKey = key.replace("custom_", "");
+              let customVals = {};
+              try { customVals = JSON.parse(task.custom_fields_json || "{}"); } catch {}
+              customVals[colKey] = val;
+              fields.custom_fields_json = JSON.stringify(customVals);
+            } else if (isScheduleField) {
+              // Same validation and rescheduling rules as the grid.
+              Object.assign(fields, DataGrid.normalizeEdit(task, key, val));
+            } else {
+              fields[key] = val;
             }
+
+            await state.storage.updateTask(task.id, fields);
+            if (isScheduleField) await cascadeAutoSchedule(task.id);
             await AppShell.refresh();
             this.render();
           } catch (err) {
             showToast(`Update failed: ${err.message}`, "error");
+            this.render();
           }
         });
 
@@ -6048,35 +6393,9 @@
       },
       async addRootTask() {
         try {
-          const date = todayIso();
-          const id = await state.storage.insertTask({
-            wbs_code: WBSUtils.nextRootCode(state.tasks),
-            task_type: DEFAULT_TYPE,
-            title: "New Task",
-            start_date: date,
-            end_date: date,
-            actual_start_date: null,
-            actual_end_date: null,
-            duration_hours: workingHoursPerDay(),
-            actual_hours: 0,
-            remaining_hours: workingHoursPerDay(),
-            progress: 0,
-            predecessor_ids: "",
-            resource: "",
-            comments: "",
-            tags: "",
-            jira_url: "",
-            color: "",
-            is_milestone: 0,
-            is_highlighted: 0,
-            parent_id: null,
-            status: "Not Started",
-            priority: "Medium",
-            sprint_id: null,
-            manually_scheduled: 0,
-            constraint_type: null,
-            constraint_date: null
-          });
+          const id = await state.storage.insertTask(newTaskFields({
+            wbs_code: WBSUtils.nextRootCode(state.tasks)
+          }));
           await this.refresh();
           this.editTaskTitle(id);
         } catch (error) {
@@ -6085,39 +6404,31 @@
       },
       async addChildTask(parent) {
         try {
-          const date = todayIso();
-          const id = await state.storage.insertTask({
+          const id = await state.storage.insertTask(newTaskFields({
             wbs_code: WBSUtils.nextChildCode(parent, state.tasks),
-            task_type: DEFAULT_TYPE,
-            title: "New Task",
-            start_date: date,
-            end_date: date,
-            actual_start_date: null,
-            actual_end_date: null,
-            duration_hours: workingHoursPerDay(),
-            actual_hours: 0,
-            remaining_hours: workingHoursPerDay(),
-            progress: 0,
-            predecessor_ids: "",
-            resource: "",
-            comments: "",
-            tags: "",
-            jira_url: "",
-            color: "",
-            is_milestone: 0,
-            is_highlighted: 0,
             parent_id: parent.id,
-            status: "Not Started",
-            priority: "Medium",
-            sprint_id: null,
-            manually_scheduled: 0,
-            constraint_type: null,
-            constraint_date: null
-          });
+            ...datesFromParent(parent)
+          }));
           await this.refresh();
           this.editTaskTitle(id);
         } catch (error) {
           showToast(`Unable to add child task: ${error.message}`, "error");
+        }
+      },
+      async insertSiblingTask(anchorId, position) {
+        try {
+          const anchor = findTask(anchorId);
+          if (!anchor) return;
+          const parent = anchor.parent_id == null ? null : findTask(anchor.parent_id);
+          const id = await state.storage.insertTaskAt(
+            newTaskFields({ parent_id: anchor.parent_id ?? null, ...datesFromParent(parent) }),
+            anchor.id,
+            position
+          );
+          await this.refresh();
+          this.editTaskTitle(id);
+        } catch (error) {
+          showToast(`Unable to insert task: ${error.message}`, "error");
         }
       },
       editTaskTitle(id) {
@@ -6382,7 +6693,24 @@
                 { value: "inside", label: "Inside" },
                 { value: "middle", label: "Middle" },
                 { value: "above", label: "Above" },
-                { value: "below", label: "Below" }
+                { value: "below", label: "Below" },
+                { value: "before", label: "Before (left of bar)" },
+                { value: "after", label: "After (right of bar)" }
+            ]},
+            { name: "align", label: "Default alignment", type: "select", value: current.align, options: [
+                { value: "", label: "Automatic" },
+                { value: "left", label: "Left" },
+                { value: "center", label: "Center" },
+                { value: "right", label: "Right" }
+            ]},
+            { name: "size", label: "Default text size", type: "select", value: current.size, options: [
+                { value: "s", label: "Small" },
+                { value: "m", label: "Medium" },
+                { value: "l", label: "Large" }
+            ]},
+            { name: "overflow", label: "Text too long for bar", type: "select", value: current.overflow, options: [
+                { value: "outside", label: "Move outside" },
+                { value: "truncate", label: "Truncate" }
             ]}
           ],
           onSubmit: (res) => {
@@ -6390,14 +6718,27 @@
               return "Gantt label source must be task or custom";
             }
             if (!GANTT_LABEL_POSITIONS.includes(res.position)) {
-              return "Gantt label position must be inside, middle, above, or below";
+              return "Gantt label position must be inside, middle, above, below, before, or after";
+            }
+            if (!["", ...GANTT_LABEL_ALIGNS].includes(res.align)) {
+              return "Default alignment must be automatic, left, center, or right";
+            }
+            if (!Object.hasOwn(GANTT_LABEL_SIZES, res.size)) {
+              return "Default text size must be small, medium, or large";
+            }
+            if (!GANTT_LABEL_OVERFLOWS.includes(res.overflow)) {
+              return "Overflow must be move outside or truncate";
             }
           }
         });
         if (res == null) return;
-        const safeSource = res.source;
-        const safePosition = res.position;
-        await state.storage.saveSetting("ganttLabels", { source: safeSource, position: safePosition });
+        await state.storage.saveSetting("ganttLabels", {
+          source: res.source,
+          position: res.position,
+          align: res.align,
+          size: res.size,
+          overflow: res.overflow
+        });
         await this.refresh();
         showToast("Gantt label settings saved", "success");
       },
@@ -6703,6 +7044,44 @@
       }
     };
 
+    function newTaskFields(overrides = {}) {
+      const date = todayIso();
+      return {
+        task_type: DEFAULT_TYPE,
+        title: "New Task",
+        start_date: date,
+        end_date: date,
+        actual_start_date: null,
+        actual_end_date: null,
+        duration_hours: workingHoursPerDay(),
+        actual_hours: 0,
+        remaining_hours: workingHoursPerDay(),
+        progress: 0,
+        predecessor_ids: "",
+        resource: "",
+        comments: "",
+        tags: "",
+        jira_url: "",
+        color: "",
+        is_milestone: 0,
+        is_highlighted: 0,
+        parent_id: null,
+        status: "Not Started",
+        priority: "Medium",
+        sprint_id: null,
+        manually_scheduled: 0,
+        constraint_type: null,
+        constraint_date: null,
+        ...overrides
+      };
+    }
+
+    function datesFromParent(parent) {
+      if (!parent || !isValidIsoDate(parent.start_date) || !isValidIsoDate(parent.end_date) || parent.end_date < parent.start_date) return {};
+      const hours = Math.max(1, workingDaysBetween(parent.start_date, parent.end_date)) * workingHoursPerDay();
+      return { start_date: parent.start_date, end_date: parent.end_date, duration_hours: hours, remaining_hours: hours };
+    }
+
     function findTask(id) {
       return state.tasks.find(t => t.id === id);
     }
@@ -6851,6 +7230,7 @@
 
           if (field.type === "select") {
             const select = document.createElement("select");
+            select.name = field.name;
             select.style.cssText = "width:100%;height:34px;border-radius:6px;padding:0 8px;background:var(--bg-elevated);color:var(--text-primary);border:1px solid var(--border)";
             field.options.forEach(opt => {
               const o = document.createElement("option");
@@ -7009,59 +7389,136 @@
         input.style.cssText = "width:100%;height:34px;border-radius:6px;padding:0 10px;margin-bottom:14px";
         textLabel.appendChild(input);
 
-        const posLabel = document.createElement("div");
-        posLabel.style.cssText = "color:var(--text-primary);font-size:13px;font-weight:600;margin-bottom:6px";
-        posLabel.textContent = "Position";
-        const positionWrap = document.createElement("div");
-        positionWrap.style.cssText = "display:flex;gap:8px";
-        let position = ["above", "below", "middle"].includes(task.gantt_label_position) ? task.gantt_label_position : "above";
-        const makePositionButton = value => {
+        const rowLabel = value => {
+          const div = document.createElement("div");
+          div.style.cssText = "color:var(--text-primary);font-size:13px;font-weight:600;margin-bottom:6px";
+          div.textContent = value;
+          return div;
+        };
+        const toggleButton = (label, attr, value, onClick) => {
           const btn = document.createElement("button");
           btn.type = "button";
-          btn.textContent = value[0].toUpperCase() + value.slice(1);
-          btn.setAttribute("aria-pressed", String(position === value));
-          if (position === value) btn.className = "primary";
-          btn.addEventListener("click", () => {
-            position = value;
-            for (const item of positionWrap.querySelectorAll("button")) {
-              const active = item.dataset.position === position;
-              item.className = active ? "primary" : "";
-              item.setAttribute("aria-pressed", String(active));
-            }
-          });
-          btn.dataset.position = value;
+          btn.textContent = label;
+          btn.dataset[attr] = value;
+          btn.addEventListener("click", onClick);
           return btn;
         };
-        positionWrap.append(makePositionButton("above"), makePositionButton("middle"), makePositionButton("below"));
+        const setPressed = (btn, active) => {
+          btn.className = active ? "primary" : "";
+          btn.setAttribute("aria-pressed", String(active));
+        };
+        const capital = value => value[0].toUpperCase() + value.slice(1);
 
+        let position = GANTT_TASK_LABEL_POSITIONS.includes(task.gantt_label_position) ? task.gantt_label_position : "above";
+        let align = GANTT_LABEL_ALIGNS.includes(task.gantt_label_align) ? task.gantt_label_align : "";
+        // "" = automatic: bold when the text sits in the middle of the bar.
+        let boldFlag = ["0", "1"].includes(task.gantt_label_bold) ? task.gantt_label_bold : "";
+        let italic = task.gantt_label_italic === "1";
+        const boldOn = () => boldFlag === "1" || (boldFlag === "" && position === "middle" && !(task.is_milestone && !task.is_summary));
+
+        const positionWrap = document.createElement("div");
+        positionWrap.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px";
+        const alignWrap = document.createElement("div");
+        alignWrap.style.cssText = "display:flex;gap:8px";
+        const boldBtn = toggleButton("Bold", "style", "bold", () => {
+          boldFlag = boldOn() ? "0" : "1";
+          sync();
+        });
+        const italicBtn = toggleButton("Italic", "style", "italic", () => {
+          italic = !italic;
+          sync();
+        });
+        const sync = () => {
+          const beside = position === "before" || position === "after";
+          for (const btn of positionWrap.querySelectorAll("button")) setPressed(btn, btn.dataset.position === position);
+          for (const btn of alignWrap.querySelectorAll("button")) {
+            setPressed(btn, !beside && btn.dataset.align === align);
+            btn.disabled = beside;
+          }
+          setPressed(boldBtn, boldOn());
+          setPressed(italicBtn, italic);
+        };
+        for (const value of GANTT_TASK_LABEL_POSITIONS) {
+          positionWrap.appendChild(toggleButton(capital(value), "position", value, () => {
+            position = value;
+            sync();
+          }));
+        }
+        for (const value of GANTT_LABEL_ALIGNS) {
+          alignWrap.appendChild(toggleButton(capital(value), "align", value, () => {
+            align = align === value ? "" : value;
+            sync();
+          }));
+        }
+
+        const fieldLabel = value => {
+          const label = document.createElement("label");
+          label.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600";
+          label.textContent = value;
+          return label;
+        };
         const styleGrid = document.createElement("div");
         styleGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px";
-        const colorLabel = document.createElement("label");
-        colorLabel.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600";
-        colorLabel.textContent = "Text color";
+
+        const colorLabel = fieldLabel("Text color");
+        const hadColor = /^#[0-9a-fA-F]{6}$/.test(task.gantt_label_color || "");
+        // Untouched and never set = automatic colour.
+        let colorTouched = false;
         const colorInput = document.createElement("input");
         colorInput.type = "color";
-        colorInput.value = /^#[0-9a-fA-F]{6}$/.test(task.gantt_label_color || "") ? task.gantt_label_color : "#e6edf3";
+        colorInput.value = hadColor ? task.gantt_label_color : "#e6edf3";
         colorInput.style.cssText = "display:block;width:100%;height:34px;border-radius:6px;padding:2px;margin-top:6px;cursor:pointer";
+        colorInput.addEventListener("input", () => {
+          colorTouched = true;
+        });
         colorLabel.appendChild(colorInput);
 
-        const fontLabel = document.createElement("label");
-        fontLabel.style.cssText = "display:block;color:var(--text-primary);font-size:13px;font-weight:600";
-        fontLabel.textContent = "Font";
+        const fontLabel = fieldLabel("Font");
         const fontSelect = document.createElement("select");
         fontSelect.style.cssText = "display:block;width:100%;height:34px;border-radius:6px;margin-top:6px";
-        const currentFont = GANTT_LABEL_FONTS.some(font => font.value === task.gantt_label_font) ? task.gantt_label_font : GANTT_LABEL_FONTS[0].value;
         for (const font of GANTT_LABEL_FONTS) {
           const option = document.createElement("option");
           option.value = font.value;
           option.textContent = font.label;
           fontSelect.appendChild(option);
         }
-        fontSelect.value = currentFont;
+        fontSelect.value = GANTT_LABEL_FONTS.some(font => font.value === task.gantt_label_font) ? task.gantt_label_font : GANTT_LABEL_FONTS[0].value;
         fontLabel.appendChild(fontSelect);
-        styleGrid.append(colorLabel, fontLabel);
 
-        content.append(summary, textLabel, posLabel, positionWrap, styleGrid);
+        const sizeLabel = fieldLabel("Size");
+        const sizeSelect = document.createElement("select");
+        sizeSelect.dataset.field = "size";
+        sizeSelect.style.cssText = "display:block;width:100%;height:34px;border-radius:6px;margin-top:6px";
+        for (const [value, label] of [["", "Default"], ["s", "Small"], ["m", "Medium"], ["l", "Large"]]) {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = label;
+          sizeSelect.appendChild(option);
+        }
+        sizeSelect.value = task.gantt_label_size || "";
+        sizeLabel.appendChild(sizeSelect);
+
+        const styleWrap = document.createElement("div");
+        const styleButtons = document.createElement("div");
+        styleButtons.style.cssText = "display:flex;gap:8px";
+        styleButtons.append(boldBtn, italicBtn);
+        styleWrap.append(rowLabel("Style"), styleButtons);
+
+        styleGrid.append(colorLabel, fontLabel, sizeLabel, styleWrap);
+        sync();
+
+        const result = () => ({
+          text: input.value,
+          position,
+          align,
+          size: sizeSelect.value,
+          bold: boldFlag,
+          italic: italic ? "1" : "",
+          color: hadColor || colorTouched ? colorInput.value : "",
+          font: fontSelect.value
+        });
+
+        content.append(summary, textLabel, rowLabel("Position"), positionWrap, rowLabel("Alignment"), alignWrap, styleGrid);
 
         const foot = document.createElement("div");
         foot.className = "modal-foot";
@@ -7078,7 +7535,7 @@
         save.type = "button";
         save.className = "primary";
         save.textContent = "Save";
-        save.addEventListener("click", () => close({ text: input.value, position, color: colorInput.value, font: fontSelect.value }));
+        save.addEventListener("click", () => close(result()));
         foot.append(clear, cancel, save);
 
         box.append(head, content, foot);
@@ -7086,7 +7543,7 @@
         el.modal.classList.add("show");
         el.modal.setAttribute("aria-hidden", "false");
 
-        const focusables = () => [...box.querySelectorAll("input,button")];
+        const focusables = () => [...box.querySelectorAll("input,select,button:not(:disabled)")];
         const close = value => {
           el.modal.classList.remove("show");
           el.modal.setAttribute("aria-hidden", "true");
@@ -7098,7 +7555,7 @@
           if (event.key === "Escape") close(null);
           if (event.key === "Enter" && document.activeElement === input) {
             event.preventDefault();
-            close({ text: input.value, position, color: colorInput.value, font: fontSelect.value });
+            close(result());
           }
           if (event.key !== "Tab") return;
           const nodes = focusables();

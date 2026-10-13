@@ -165,7 +165,7 @@ The `Color` column lets you give any task its own Gantt bar colour, overriding i
 ## Dates, Duration, and the Working Calendar
 
 - **Plan Start / Plan End** — the *scheduled* dates for a task. Click either cell to open a date picker. On summary rows, start and end roll up automatically from child tasks.
-- **Duration (Dur)** — read-only, calculated from the start/end dates using the working calendar (e.g. `3d 4h` = three working days and four hours). You can also type hours directly into the `Hours` column.
+- **Duration (Dur)** — read-only, calculated from the start/end dates using the working calendar (e.g. `3d 4h` = three working days and four hours). `Hours` and `Plan End` stay in step: changing `Plan End` recalculates `Hours`, and typing `Hours` moves `Plan End`.
 - **Actual Start / Actual End** — fill these in as work progresses. They're compared with planned dates to calculate slippage. Actual-date bars appear below the Gantt bar in a lighter colour.
 
 **Working Calendar** — by default the working week is Monday–Friday, 8 hours per day. Go to `Tools > Calendar Settings` to change:
@@ -221,6 +221,12 @@ Lag is in working days (`d`) or hours (`h`). Positive lag = gap; negative lag = 
 
 > 💡 When you set a predecessor, NovaPlan **automatically reschedules** the task's start/end dates to respect the constraint. Dependency arrows appear on the Gantt chart as curved lines with arrowheads, and circular dependencies are detected and blocked.
 
+**Rescheduling** — whenever a task's dates change (grid, details drawer, or dragging its Gantt bar), every task that depends on it moves too, keeping its own length. Summary tasks move by shifting their subtasks.
+
+- Dragging a bar moves it in whole days and skips non-working days. Moving a bar keeps its `Hours`; dragging an edge resizes it and updates `Hours`.
+- A dependent task cannot be placed earlier than its predecessors allow. Dragging stops at the earliest allowed date; a date typed in the grid or drawer is rejected.
+- Placing a dependent task later than it needs to be records the gap as lag (for example `1FS` becomes `1FS+2d`), so the gap is kept when the predecessor moves. Move it back to remove the lag.
+
 ## The Gantt Timeline
 
 The Gantt chart shows each task as a horizontal bar spanning its planned start to end date, aligned with the task rows in the grid.
@@ -229,7 +235,7 @@ The Gantt chart shows each task as a horizontal bar spanning its planned start t
 
 | Visual element | What it means |
 |---|---|
-| Coloured bar | Planned schedule. Colour matches the task type (or custom colour). |
+| Coloured bar | Planned schedule, from Plan Start to Plan End including any non-working days in between. Colour matches the task type (or custom colour). |
 | Darker fill inside bar | Completed portion (progress %). |
 | Thin bar below main bar | Actual start/end dates (white, or red if slipped). |
 | Thin gray bar below | Baseline dates (where the task was when you set the baseline). |
@@ -243,6 +249,15 @@ The Gantt chart shows each task as a horizontal bar spanning its planned start t
 **Zooming** — use the `−` and `+` buttons in the Gantt panel header. Eight levels from 25% (very wide) to 400% (detailed daily). Date-tick spacing adjusts automatically.
 
 **Hovering** — hover over any Gantt bar for a tooltip with full task details: planned dates, actual dates, duration, float, progress, sprint, resource, Jira link, and baseline finish.
+
+**Timeline text**
+
+- Click a bar to set its own text, then choose a position (above, middle, below, before, after) and an alignment (left, center, right).
+- Pick a size (small, medium, large) and bold or italic.
+- Text too long for its bar moves to the right of the bar; switch to truncation in `Tools → Gantt Label Settings`.
+- Text that would run off the right end of the timeline is placed to the left of its bar instead.
+- Text on a bar picks dark or white automatically for contrast unless you choose a colour.
+- `Tools → Gantt Label Settings` sets the default position, alignment, size and overflow behaviour for all bars.
 
 ## Views — Eight Ways to See Your Plan
 
